@@ -33,7 +33,7 @@ export class GLMService {
     }
     this.apiKey = apiKey;
     this.baseURL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
-    this.model = 'glm-4.5';
+    this.model = process.env.GLM_MODEL_NAME || 'glm-4-flash';
   }
 
   async analyzeCluster(texts: string[]): Promise<{
