@@ -1,0 +1,11 @@
+# Python依赖列表
+
+# 小红书数据采集依赖
+curl-cffi>=0.5.0
+pyexecjs>=1.5.1
+
+# 抖音数据采集依赖
+DrissionPage>=4.0.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+

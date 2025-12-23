@@ -1,0 +1,180 @@
+@import "tailwindcss";
+
+:root {
+  /* Cream/Beige color palette */
+  --cream-50: #FBFBF9;
+  --cream-100: #F3F2EE;
+  --cream-200: #E5E4DE;
+
+  /* Onyx/Black color palette */
+  --onyx: #18181B;
+  --onyx-light: #27272A;
+
+  /* Amber accent colors */
+  --amber-400: #FBBF24;
+  --amber-500: #F59E0B;
+  --amber-600: #D97706;
+
+  /* Background and foreground */
+  --background: #FBFBF9;
+  --foreground: #18181B;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: 'Inter', sans-serif;
+
+  /* Custom colors */
+  --color-cream-50: var(--cream-50);
+  --color-cream-100: var(--cream-100);
+  --color-cream-200: var(--cream-200);
+  --color-onyx: var(--onyx);
+  --color-onyx-light: var(--onyx-light);
+  --color-amber-400: var(--amber-400);
+  --color-amber-500: var(--amber-500);
+  --color-amber-600: var(--amber-600);
+}
+
+body {
+  background-color: var(--cream-50);
+  color: var(--onyx);
+  font-family: 'Inter', sans-serif;
+  /* Background glow effect */
+  background-image:
+    radial-gradient(circle at 10% 20%, rgba(245, 158, 11, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 90% 10%, rgba(0, 0, 0, 0.03) 0%, transparent 40%);
+  min-height: 100vh;
+}
+
+/* Custom slider styles */
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%;
+  background: transparent;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: var(--onyx);
+  cursor: pointer;
+  margin-top: -8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 4px;
+  cursor: pointer;
+  background: var(--cream-200);
+  border-radius: 2px;
+}
+
+input[type=range]::-moz-range-thumb {
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: var(--onyx);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+input[type=range]::-moz-range-track {
+  width: 100%;
+  height: 4px;
+  cursor: pointer;
+  background: var(--cream-200);
+  border-radius: 2px;
+}
+
+/* Hide scrollbar but keep functionality */
+.hide-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.hide-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.hide-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Glass panel effect */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+/* Neuro shadow */
+.shadow-neuro {
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 0 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Loading bar animation */
+@keyframes load {
+  0% { width: 0; }
+  50% { width: 70%; }
+  100% { width: 100%; }
+}
+
+.loading-bar {
+  animation: load 2s infinite ease-in-out;
+  background: linear-gradient(90deg, var(--onyx) 0%, #4B5563 100%);
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Custom checkbox toggle */
+.toggle-checkbox:checked {
+  right: 0;
+  border-color: var(--onyx);
+}
+
+.toggle-checkbox:checked + .toggle-label {
+  background-color: var(--onyx);
+}
+
+/* Card hover effect */
+.card-hover {
+  transition: all 0.2s ease-out;
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* Pulse animation for status indicator */
+@keyframes pulse-amber {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse-amber {
+  animation: pulse-amber 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
