@@ -2,7 +2,7 @@
 
 一个帮助个人开发者从社交媒体自动发现用户核心痛点的 Web 应用，支持智能聚类分析和 AI 产品方案生成。
 
-<img src="C:\Users\29142\AppData\Roaming\Typora\typora-user-images\image-20251223210939459.png" alt="image-20251223210939459" style="zoom: 50%;" />
+<img src="./assets/demo-preview.png" alt="image-20251223210939459" style="zoom: 50%;" />
 
 ## 功能特性
 
