@@ -146,9 +146,9 @@ export class JobManager {
         throw new Error('未能获取到任何相关数据');
       }
 
-      // 步骤3: 文本聚类
-      this.updateJobStatus(jobId, 'processing', '正在进行聚类分析...');
-      const clusters = this.clusteringService.clusterTexts(allRawTexts, 2);
+      // 步骤3: 文本聚类（使用语义向量化 + DBSCAN）
+      this.updateJobStatus(jobId, 'processing', '正在进行语义聚类分析...');
+      const clusters = await this.clusteringService.clusterTexts(allRawTexts, 2);
 
       if (clusters.length === 0) {
         throw new Error('无法从数据中识别出明显的痛点聚类');

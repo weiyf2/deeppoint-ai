@@ -1,4 +1,21 @@
-// 聚类分析服务
+// 聚类分析服务 - 基于语义向量化 + DBSCAN
+import { spawn } from 'child_process';
+import * as path from 'path';
+
+export interface SemanticCluster {
+  representative_text: string;
+  size: number;
+  texts: string[];
+}
+
+export interface ClusteringResult {
+  success: boolean;
+  clusters: SemanticCluster[];
+  total_clusters: number;
+  total_texts: number;
+  error?: string;
+}
+
 export interface ClusterResult {
   id: string;
   size: number;
@@ -12,193 +29,166 @@ export interface ClusterResult {
 }
 
 export class ClusteringService {
-  // 改进的文本相似度计算
-  private calculateSimilarity(text1: string, text2: string): number {
-    const words1 = new Set(this.tokenize(text1));
-    const words2 = new Set(this.tokenize(text2));
+  private pythonPath: string;
+  private scriptPath: string;
 
-    if (words1.size === 0 || words2.size === 0) return 0;
-
-    const intersection = new Set([...words1].filter(x => words2.has(x)));
-    const union = new Set([...words1, ...words2]);
-
-    // Jaccard相似度
-    const jaccardSimilarity = intersection.size / union.size;
-
-    // 加权考虑文本长度相似性
-    const lengthSimilarity = 1 - Math.abs(text1.length - text2.length) / Math.max(text1.length, text2.length);
-
-    // 综合相似度（Jaccard占70%，长度相似性占30%）
-    return jaccardSimilarity * 0.7 + lengthSimilarity * 0.3;
+  constructor() {
+    // 使用系统 Python 或虚拟环境
+    this.pythonPath = process.env.PYTHON_PATH || 'python';
+    this.scriptPath = path.join(process.cwd(), 'lib', 'semantic_clustering.py');
   }
 
-  private tokenize(text: string): string[] {
-    // 改进的中文分词
-    const cleaned = text
-      .replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, ' ')
-      .toLowerCase()
-      .trim();
+  /**
+   * 调用 Python 语义聚类服务
+   * 使用智谱 Embedding + DBSCAN 算法
+   */
+  public async clusterTextsWithEmbeddings(
+    texts: string[],
+    options: {
+      eps?: number;
+      minSamples?: number;
+      minLength?: number;
+    } = {}
+  ): Promise<ClusteringResult> {
+    const { eps = 0.4, minSamples = 2, minLength = 4 } = options;
 
-    // 分词并过滤
-    const words = cleaned.split(/\s+/).filter(word => {
-      // 过滤太短的词和常见停用词
-      if (word.length <= 1) return false;
+    return new Promise((resolve, reject) => {
+      const args = [
+        this.scriptPath,
+        '--stdin',
+        '--eps', eps.toString(),
+        '--min-samples', minSamples.toString(),
+        '--min-length', minLength.toString()
+      ];
 
-      const stopWords = ['的', '了', '是', '在', '有', '和', '就', '不', '人', '都', '一', '一个', '这个', '那个', '什么', '怎么', '可以', '没有', '知道', '觉得', '感觉'];
-      return !stopWords.includes(word);
+      const pythonProcess = spawn(this.pythonPath, args, {
+        cwd: process.cwd(),
+        env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
+      });
+
+      let stdout = '';
+      let stderr = '';
+
+      pythonProcess.stdout.on('data', (data) => {
+        stdout += data.toString();
+      });
+
+      pythonProcess.stderr.on('data', (data) => {
+        stderr += data.toString();
+        // 将 Python 日志输出到控制台
+        console.log('[Python]', data.toString().trim());
+      });
+
+      pythonProcess.on('close', (code) => {
+        if (code !== 0) {
+          console.error('Python 聚类脚本执行失败:', stderr);
+          resolve({
+            success: false,
+            clusters: [],
+            total_clusters: 0,
+            total_texts: 0,
+            error: stderr || `进程退出码: ${code}`
+          });
+          return;
+        }
+
+        try {
+          const result = JSON.parse(stdout);
+          resolve(result);
+        } catch (e) {
+          console.error('解析 Python 输出失败:', stdout);
+          resolve({
+            success: false,
+            clusters: [],
+            total_clusters: 0,
+            total_texts: 0,
+            error: '解析聚类结果失败'
+          });
+        }
+      });
+
+      pythonProcess.on('error', (err) => {
+        console.error('启动 Python 进程失败:', err);
+        resolve({
+          success: false,
+          clusters: [],
+          total_clusters: 0,
+          total_texts: 0,
+          error: `启动 Python 失败: ${err.message}`
+        });
+      });
+
+      // 发送输入数据
+      const inputJson = JSON.stringify({ texts });
+      pythonProcess.stdin.write(inputJson);
+      pythonProcess.stdin.end();
+    });
+  }
+
+  /**
+   * 兼容旧接口的聚类方法
+   * 内部使用新的语义聚类
+   */
+  public async clusterTexts(texts: string[], minClusterSize: number = 2): Promise<string[][]> {
+    const result = await this.clusterTextsWithEmbeddings(texts, {
+      minSamples: minClusterSize
     });
 
-    return words;
+    if (!result.success || result.clusters.length === 0) {
+      // 降级到基础聚类
+      console.warn('语义聚类失败，使用基础聚类');
+      return this.fallbackCluster(texts, minClusterSize);
+    }
+
+    // 转换为旧格式
+    return result.clusters.map(c => c.texts);
   }
 
-  // 使用改进的聚类算法
-  public clusterTexts(texts: string[], minClusterSize: number = 2): string[][] {
-    if (texts.length === 0) {
+  /**
+   * 获取语义聚类结果（新格式）
+   */
+  public async getSemanticClusters(texts: string[]): Promise<SemanticCluster[]> {
+    const result = await this.clusterTextsWithEmbeddings(texts);
+
+    if (!result.success) {
+      console.warn('语义聚类失败:', result.error);
       return [];
     }
 
-    if (texts.length < minClusterSize) {
-      return [texts];
-    }
-
-    // 计算相似度矩阵
-    const similarities: number[][] = [];
-    for (let i = 0; i < texts.length; i++) {
-      similarities[i] = [];
-      for (let j = 0; j < texts.length; j++) {
-        if (i === j) {
-          similarities[i][j] = 1.0;
-        } else {
-          similarities[i][j] = this.calculateSimilarity(texts[i], texts[j]);
-        }
-      }
-    }
-
-    // 动态调整相似度阈值
-    const allSimilarities = [];
-    for (let i = 0; i < texts.length; i++) {
-      for (let j = i + 1; j < texts.length; j++) {
-        allSimilarities.push(similarities[i][j]);
-      }
-    }
-
-    // 使用中位数作为基准，动态调整阈值
-    allSimilarities.sort((a, b) => a - b);
-    const median = allSimilarities[Math.floor(allSimilarities.length / 2)] || 0.1;
-    const dynamicThreshold = Math.max(0.15, Math.min(0.4, median * 1.2));
-
-    // 执行聚类
-    const clusters: Set<number>[] = [];
-    const assigned = new Set<number>();
-
-    for (let i = 0; i < texts.length; i++) {
-      if (assigned.has(i)) continue;
-
-      const cluster = new Set<number>([i]);
-      assigned.add(i);
-
-      // 寻找相似的文本（使用动态阈值）
-      for (let j = i + 1; j < texts.length; j++) {
-        if (!assigned.has(j) && similarities[i][j] > dynamicThreshold) {
-          cluster.add(j);
-          assigned.add(j);
-        }
-      }
-
-      clusters.push(cluster);
-    }
-
-    // 过滤和合并小聚类
-    const validClusters: Set<number>[] = [];
-    const orphanedIndices: number[] = [];
-
-    for (const cluster of clusters) {
-      if (cluster.size >= minClusterSize) {
-        validClusters.push(cluster);
-      } else {
-        // 小聚类的文本变成孤立点
-        orphanedIndices.push(...Array.from(cluster));
-      }
-    }
-
-    // 如果有孤立点，尝试将它们分配到最相似的现有聚类
-    for (const orphanIndex of orphanedIndices) {
-      let bestCluster: Set<number> | null = null;
-      let bestSimilarity = 0;
-
-      for (const cluster of validClusters) {
-        // 计算与聚类的平均相似度
-        let avgSimilarity = 0;
-        for (const clusterIndex of cluster) {
-          avgSimilarity += similarities[orphanIndex][clusterIndex];
-        }
-        avgSimilarity /= cluster.size;
-
-        if (avgSimilarity > bestSimilarity && avgSimilarity > dynamicThreshold * 0.8) {
-          bestSimilarity = avgSimilarity;
-          bestCluster = cluster;
-        }
-      }
-
-      if (bestCluster) {
-        bestCluster.add(orphanIndex);
-      } else {
-        // 创建新的单文本聚类（如果允许的话）
-        validClusters.push(new Set([orphanIndex]));
-      }
-    }
-
-    // 如果没有找到任何有效聚类，创建更宽松的聚类
-    if (validClusters.length === 0) {
-      // 使用更宽松的标准
-      const relaxedThreshold = Math.max(0.1, dynamicThreshold * 0.6);
-      const relaxedMinSize = Math.max(1, Math.floor(minClusterSize * 0.7));
-
-      return this.clusterWithRelaxedCriteria(texts, similarities, relaxedThreshold, relaxedMinSize);
-    }
-
-    const result = validClusters.map(cluster =>
-      Array.from(cluster).map(index => texts[index])
-    );
-
-    return result;
+    return result.clusters;
   }
 
-  private clusterWithRelaxedCriteria(
-    texts: string[],
-    similarities: number[][],
-    threshold: number,
-    minSize: number
-  ): string[][] {
-    const clusters: Set<number>[] = [];
-    const assigned = new Set<number>();
+  /**
+   * 降级聚类算法（当 Python 服务不可用时）
+   * 使用简单的关键词匹配
+   */
+  private fallbackCluster(texts: string[], minClusterSize: number): string[][] {
+    if (texts.length === 0) return [];
+    if (texts.length < minClusterSize) return [texts];
 
-    for (let i = 0; i < texts.length; i++) {
-      if (assigned.has(i)) continue;
+    // 简单的关键词聚类
+    const clusters: Map<string, string[]> = new Map();
+    const keywords = ['价格', '质量', '服务', '功能', '使用', '推荐', '问题', '效果'];
 
-      const cluster = new Set<number>([i]);
-      assigned.add(i);
-
-      for (let j = i + 1; j < texts.length; j++) {
-        if (!assigned.has(j) && similarities[i][j] > threshold) {
-          cluster.add(j);
-          assigned.add(j);
+    for (const text of texts) {
+      let assigned = false;
+      for (const keyword of keywords) {
+        if (text.includes(keyword)) {
+          const existing = clusters.get(keyword) || [];
+          existing.push(text);
+          clusters.set(keyword, existing);
+          assigned = true;
+          break;
         }
       }
-
-      if (cluster.size >= minSize) {
-        clusters.push(cluster);
+      if (!assigned) {
+        const others = clusters.get('其他') || [];
+        others.push(text);
+        clusters.set('其他', others);
       }
     }
 
-    // 如果还是没有聚类，至少返回一个包含所有文本的聚类
-    if (clusters.length === 0) {
-      return [texts];
-    }
-
-    return clusters.map(cluster =>
-      Array.from(cluster).map(index => texts[index])
-    );
+    return Array.from(clusters.values()).filter(c => c.length >= minClusterSize);
   }
 
   // 为每个聚类选择代表性文本
@@ -207,7 +197,7 @@ export class ClusteringService {
       return cluster;
     }
 
-    // 选择长度适中且具有代表性的文本
+    // 选择长度适中的文本
     const scored = cluster.map(text => ({
       text,
       score: this.calculateRepresentativeness(text, cluster)
@@ -224,17 +214,18 @@ export class ClusteringService {
     let lengthScore = 1.0;
     if (textLength < 10) lengthScore = 0.5;
     if (textLength > 200) lengthScore = 0.7;
+    if (textLength >= 20 && textLength <= 100) lengthScore = 1.2;
 
-    // 计算与聚类中其他文本的平均相似度
-    let avgSimilarity = 0;
-    for (const otherText of cluster) {
-      if (otherText !== text) {
-        avgSimilarity += this.calculateSimilarity(text, otherText);
+    // 包含问题关键词加分
+    const painKeywords = ['怎么', '难', '坑', '贵', '问题', '希望', '不懂'];
+    let keywordScore = 0;
+    for (const keyword of painKeywords) {
+      if (text.includes(keyword)) {
+        keywordScore += 0.3;
       }
     }
-    avgSimilarity /= Math.max(1, cluster.length - 1);
 
-    return lengthScore * avgSimilarity;
+    return lengthScore + keywordScore;
   }
 
   // 生成聚类ID

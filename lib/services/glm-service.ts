@@ -1,4 +1,4 @@
-// GLM API服务类
+// GLM API服务类 - 支持 glm-4.6 思考模型
 import axios from 'axios';
 
 interface GLMMessage {
@@ -10,7 +10,11 @@ interface GLMRequest {
   model: string;
   messages: GLMMessage[];
   temperature?: number;
+  max_tokens?: number;
   stream?: boolean;
+  thinking?: {
+    type: 'enabled' | 'disabled';
+  };
 }
 
 interface GLMResponse {
@@ -25,6 +29,7 @@ export class GLMService {
   private apiKey: string;
   private baseURL: string;
   private model: string;
+  private useThinking: boolean;
 
   constructor() {
     const apiKey = process.env.GLM_API_KEY;
@@ -33,7 +38,9 @@ export class GLMService {
     }
     this.apiKey = apiKey;
     this.baseURL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
-    this.model = process.env.GLM_MODEL_NAME || 'glm-4-flash';
+    this.model = process.env.GLM_MODEL_NAME || 'glm-4.6';
+    // glm-4.6 默认启用思考模式
+    this.useThinking = this.model.includes('4.6') || process.env.GLM_USE_THINKING === 'true';
   }
 
   async analyzeCluster(texts: string[]): Promise<{
@@ -65,8 +72,15 @@ ${texts.join('\n\n')}
           content: prompt
         }
       ],
-      temperature: 0.6,
-      stream: false
+      stream: false,
+      // glm-4.6 思考模型参数配置
+      ...(this.useThinking ? {
+        thinking: { type: 'enabled' as const },
+        max_tokens: 65536,
+        temperature: 1.0  // 思考模型要求 temperature 为 1.0
+      } : {
+        temperature: 0.6
+      })
     };
 
     try {
