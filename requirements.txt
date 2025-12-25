@@ -1,5 +1,8 @@
 # Python依赖列表
 
+# 环境变量加载
+python-dotenv>=1.0.0
+
 # 小红书数据采集依赖
 curl-cffi>=0.5.0
 pyexecjs>=1.5.1

@@ -17,6 +17,14 @@ from datetime import datetime
 from urllib.parse import quote
 from typing import Dict, List, Optional
 import re
+from pathlib import Path
+
+# 加载环境变量
+from dotenv import load_dotenv
+# 优先加载 .env.local，然后是 .env
+env_path = Path(__file__).parent.parent
+load_dotenv(env_path / '.env.local')
+load_dotenv(env_path / '.env')
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -60,9 +68,13 @@ class DouyinApi:
                 from DrissionPage import ChromiumOptions
                 options = ChromiumOptions()
 
-                # 🔥 使用新无头模式（更难被检测）
-                logger.info("启用新版headless模式（更难检测）")
-                options.set_argument('--headless=new')
+                # 根据环境变量决定是否使用无头模式
+                headless = os.getenv('HEADLESS', 'true').lower() == 'true'
+                if headless:
+                    logger.info("启用新版headless模式（更难检测）")
+                    options.set_argument('--headless=new')
+                else:
+                    logger.info("使用有头模式，浏览器窗口将显示")
 
                 # 🔥 核心反检测参数
                 options.set_argument('--disable-blink-features=AutomationControlled')
