@@ -26,15 +26,23 @@ interface RawData {
   rawTexts: string[];
 }
 
+interface ClusteredDataGroup {
+  clusterId: number;
+  size: number;
+  videos: RawVideoData[];
+  comments: RawCommentData[];
+}
+
 interface RawDataExportButtonProps {
   rawData?: RawData;
+  clusteredData?: ClusteredDataGroup[];
   keywords: string[];
 }
 
 type ExportFormat = 'csv' | 'json';
-type ExportType = 'videos' | 'comments' | 'all';
+type ExportType = 'videos' | 'comments' | 'all' | 'clusters';
 
-export default function RawDataExportButton({ rawData, keywords }: RawDataExportButtonProps) {
+export default function RawDataExportButton({ rawData, clusteredData, keywords }: RawDataExportButtonProps) {
   const [showDropdown, setShowDropdown] = useState(false);
 
   if (!rawData || (rawData.videos.length === 0 && rawData.comments.length === 0)) {
@@ -124,6 +132,23 @@ export default function RawDataExportButton({ rawData, keywords }: RawDataExport
         data = { keywords, comments: rawData.comments, exportedAt: new Date().toISOString() };
         filename = `评论数据_${keywordStr}_${timestamp}.json`;
         break;
+      case 'clusters':
+        if (!clusteredData) {
+          alert('聚类数据不可用');
+          return;
+        }
+        data = {
+          keywords,
+          clusters: clusteredData,
+          stats: {
+            clusterCount: clusteredData.length,
+            totalVideos: clusteredData.reduce((sum, c) => sum + c.videos.length, 0),
+            totalComments: clusteredData.reduce((sum, c) => sum + c.comments.length, 0)
+          },
+          exportedAt: new Date().toISOString()
+        };
+        filename = `聚类数据_${keywordStr}_${timestamp}.json`;
+        break;
       case 'all':
       default:
         data = {
@@ -144,6 +169,49 @@ export default function RawDataExportButton({ rawData, keywords }: RawDataExport
     downloadFile(JSON.stringify(data, null, 2), filename, 'application/json;charset=utf-8;');
   };
 
+  const exportClustersCSV = () => {
+    if (!clusteredData) {
+      alert('聚类数据不可用');
+      return;
+    }
+
+    const rows: string[] = [];
+    rows.push('簇ID,簇大小,数据类型,内容,用户名/作者,点赞数,关联视频');
+
+    for (const cluster of clusteredData) {
+      // 导出视频
+      for (const video of cluster.videos) {
+        const row = [
+          cluster.clusterId.toString(),
+          cluster.size.toString(),
+          '视频',
+          escapeCSVField(video.title),
+          escapeCSVField(video.author),
+          escapeCSVField(video.likes),
+          ''
+        ];
+        rows.push(row.join(','));
+      }
+
+      // 导出评论
+      for (const comment of cluster.comments) {
+        const row = [
+          cluster.clusterId.toString(),
+          cluster.size.toString(),
+          '评论',
+          escapeCSVField(comment.comment_text),
+          escapeCSVField(comment.username),
+          escapeCSVField(comment.likes),
+          escapeCSVField(comment.video_title)
+        ];
+        rows.push(row.join(','));
+      }
+    }
+
+    const keywordStr = keywords.join('_').slice(0, 20);
+    downloadFile(rows.join('\n'), `聚类数据_${keywordStr}_${getTimestamp()}.csv`, 'text/csv;charset=utf-8;');
+  };
+
   const handleExport = (format: ExportFormat, type: ExportType) => {
     setShowDropdown(false);
 
@@ -152,6 +220,8 @@ export default function RawDataExportButton({ rawData, keywords }: RawDataExport
         exportVideosCSV();
       } else if (type === 'comments') {
         exportCommentsCSV();
+      } else if (type === 'clusters') {
+        exportClustersCSV();
       } else {
         exportVideosCSV();
         if (rawData.comments.length > 0) {
@@ -239,6 +309,30 @@ export default function RawDataExportButton({ rawData, keywords }: RawDataExport
               Export All Data JSON
             </button>
           </div>
+
+          {clusteredData && clusteredData.length > 0 && (
+            <div className="p-2 border-t border-zinc-700">
+              <div className="text-xs text-gray-400 px-2 py-1">Clustering Analysis</div>
+              <button
+                onClick={() => handleExport('csv', 'clusters')}
+                className="w-full text-left px-3 py-2 text-sm text-white hover:bg-zinc-800 rounded-lg transition flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Export Cluster Data CSV
+              </button>
+              <button
+                onClick={() => handleExport('json', 'clusters')}
+                className="w-full text-left px-3 py-2 text-sm text-white hover:bg-zinc-800 rounded-lg transition flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Export Cluster Data JSON
+              </button>
+            </div>
+          )}
         </div>
       )}
 

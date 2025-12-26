@@ -44,6 +44,14 @@ interface RawData {
   rawTexts: string[];
 }
 
+// 聚类数据类型
+interface ClusteredDataGroup {
+  clusterId: number;
+  size: number;
+  videos: RawData['videos'];
+  comments: RawData['comments'];
+}
+
 // API 响应类型
 interface JobResponse {
   jobId: string;
@@ -52,6 +60,7 @@ interface JobResponse {
   keywords?: string[];
   results?: ClusterResult[];
   rawData?: RawData;
+  clusteredData?: ClusteredDataGroup[];
   error?: string;
 }
 
@@ -62,6 +71,7 @@ export default function Home() {
   const [jobId, setJobId] = useState<string | null>(null);
   const [results, setResults] = useState<ClusterResult[]>([]);
   const [rawData, setRawData] = useState<RawData | undefined>(undefined);
+  const [clusteredData, setClusteredData] = useState<ClusteredDataGroup[] | undefined>(undefined);
   const [keywords, setKeywords] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -85,6 +95,7 @@ export default function Home() {
         if (data.status === "completed" && data.results) {
           setResults(data.results);
           setRawData(data.rawData);
+          setClusteredData(data.clusteredData);
           if (data.keywords) {
             setKeywords(data.keywords);
           }
@@ -102,6 +113,7 @@ export default function Home() {
       setJobId(null);
       setResults([]);
       setRawData(undefined);
+      setClusteredData(undefined);
       setKeywords(submittedKeywords);
 
       const response = await fetch('/api/analyze', {
@@ -234,7 +246,7 @@ export default function Home() {
                   <div className="text-2xl font-bold text-[#18181B] mt-1">{results.length}</div>
                 </div>
                 <ExportButton results={results} />
-                <RawDataExportButton rawData={rawData} keywords={keywords} />
+                <RawDataExportButton rawData={rawData} clusteredData={clusteredData} keywords={keywords} />
               </div>
 
               {/* Card Grid */}

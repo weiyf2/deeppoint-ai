@@ -25,6 +25,14 @@ export interface RawCommentData {
   likes: string;
 }
 
+// 聚类数据接口
+export interface ClusteredDataGroup {
+  clusterId: number;
+  size: number;
+  videos: RawVideoData[];
+  comments: RawCommentData[];
+}
+
 export interface Job {
   jobId: string;
   status: 'processing' | 'completed' | 'failed';
@@ -47,6 +55,8 @@ export interface Job {
     comments: RawCommentData[];
     rawTexts: string[];
   };
+  // 聚类后的数据分组
+  clusteredData?: ClusteredDataGroup[];
   error?: string;
 }
 
@@ -131,6 +141,8 @@ export class JobManager {
       const allRawTexts: string[] = [];
       const allVideos: RawVideoData[] = [];
       const allComments: RawCommentData[] = [];
+      // 建立文本索引到原始数据的映射
+      const textToSourceMap: Map<string, { type: 'video' | 'comment', data: RawVideoData | RawCommentData }> = new Map();
       let totalVideoCount = 0;
       let totalCommentCount = 0;
 
@@ -154,7 +166,7 @@ export class JobManager {
           // 保存原始视频数据
           if (result.videos) {
             for (const video of result.videos) {
-              allVideos.push({
+              const videoData: RawVideoData = {
                 title: video.title || '',
                 author: video.author || '',
                 video_url: video.video_url || '',
@@ -163,19 +175,31 @@ export class JobManager {
                 collected_at: video.collected_at || new Date().toISOString(),
                 comment_count: video.comment_count,
                 description: video.description
-              });
+              };
+              allVideos.push(videoData);
+
+              // 建立视频标题到数据的映射
+              if (videoData.title) {
+                textToSourceMap.set(videoData.title, { type: 'video', data: videoData });
+              }
             }
           }
 
           // 保存原始评论数据
           if (result.allComments) {
             for (const comment of result.allComments) {
-              allComments.push({
+              const commentData: RawCommentData = {
                 video_title: comment.video_title || '',
                 comment_text: comment.comment_text || '',
                 username: comment.username || '',
                 likes: comment.likes || '0'
-              });
+              };
+              allComments.push(commentData);
+
+              // 建立评论文本到数据的映射
+              if (commentData.comment_text) {
+                textToSourceMap.set(commentData.comment_text, { type: 'comment', data: commentData });
+              }
             }
           }
         } else {
@@ -192,7 +216,7 @@ export class JobManager {
           // 保存原始视频数据（标准模式）
           if (result.videos) {
             for (const video of result.videos) {
-              allVideos.push({
+              const videoData: RawVideoData = {
                 title: video.title || '',
                 author: video.author || '',
                 video_url: video.video_url || '',
@@ -201,7 +225,13 @@ export class JobManager {
                 collected_at: video.collected_at || new Date().toISOString(),
                 comment_count: video.comment_count,
                 description: video.description
-              });
+              };
+              allVideos.push(videoData);
+
+              // 建立视频标题到数据的映射
+              if (videoData.title) {
+                textToSourceMap.set(videoData.title, { type: 'video', data: videoData });
+              }
             }
           }
         }
@@ -232,6 +262,36 @@ export class JobManager {
       if (clusters.length === 0) {
         throw new Error('无法从数据中识别出明显的痛点聚类');
       }
+
+      // 构建聚类数据分组（用于导出）
+      const clusteredDataGroups: ClusteredDataGroup[] = [];
+      for (let i = 0; i < clusters.length; i++) {
+        const cluster = clusters[i];
+        const clusterVideos: RawVideoData[] = [];
+        const clusterComments: RawCommentData[] = [];
+
+        // 遍历聚类中的每个文本，找到对应的原始数据
+        for (const text of cluster) {
+          const source = textToSourceMap.get(text);
+          if (source) {
+            if (source.type === 'video') {
+              clusterVideos.push(source.data as RawVideoData);
+            } else {
+              clusterComments.push(source.data as RawCommentData);
+            }
+          }
+        }
+
+        clusteredDataGroups.push({
+          clusterId: i,
+          size: cluster.length,
+          videos: clusterVideos,
+          comments: clusterComments
+        });
+      }
+
+      // 保存聚类数据
+      job.clusteredData = clusteredDataGroups;
 
       // 步骤4: LLM分析每个聚类
       this.updateJobStatus(jobId, 'processing', '正在调用LLM分析...');

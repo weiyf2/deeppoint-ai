@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { jobManager, RawVideoData, RawCommentData } from '../../../../../lib/services/job-manager';
+import { jobManager, RawVideoData, RawCommentData, ClusteredDataGroup } from '../../../../../lib/services/job-manager';
 import { ClusterResult } from '../../../../../lib/services/clustering-service';
 
 export async function GET(
@@ -38,6 +38,7 @@ export async function GET(
         comments: RawCommentData[];
         rawTexts: string[];
       };
+      clusteredData?: ClusteredDataGroup[];
       error?: string;
     } = {
       jobId: job.jobId,
@@ -52,6 +53,10 @@ export async function GET(
       // 包含原始数据
       if (job.rawData) {
         response.rawData = job.rawData;
+      }
+      // 包含聚类数据
+      if (job.clusteredData) {
+        response.clusteredData = job.clusteredData;
       }
     }
 
