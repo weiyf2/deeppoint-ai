@@ -8,6 +8,7 @@ import JobStatus from "@/components/JobStatus";
 import ResultsTable from "@/components/ResultsTable";
 import DetailModal from "@/components/DetailModal";
 import ExportButton from "@/components/ExportButton";
+import RawDataExportButton from "@/components/RawDataExportButton";
 
 // ClusterResult 类型定义
 interface ClusterResult {
@@ -22,12 +23,35 @@ interface ClusterResult {
   representative_texts: string[];
 }
 
+// 原始数据类型
+interface RawData {
+  videos: Array<{
+    title: string;
+    author: string;
+    video_url: string;
+    publish_time?: string;
+    likes: string;
+    collected_at: string;
+    comment_count?: number;
+    description?: string;
+  }>;
+  comments: Array<{
+    video_title: string;
+    comment_text: string;
+    username: string;
+    likes: string;
+  }>;
+  rawTexts: string[];
+}
+
 // API 响应类型
 interface JobResponse {
   jobId: string;
   status: string;
   progress: string;
+  keywords?: string[];
   results?: ClusterResult[];
+  rawData?: RawData;
   error?: string;
 }
 
@@ -37,6 +61,8 @@ const fetcher = (url: string) => fetch(url).then(res => res.json());
 export default function Home() {
   const [jobId, setJobId] = useState<string | null>(null);
   const [results, setResults] = useState<ClusterResult[]>([]);
+  const [rawData, setRawData] = useState<RawData | undefined>(undefined);
+  const [keywords, setKeywords] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   // 模态框状态管理
@@ -58,6 +84,10 @@ export default function Home() {
       onSuccess: (data) => {
         if (data.status === "completed" && data.results) {
           setResults(data.results);
+          setRawData(data.rawData);
+          if (data.keywords) {
+            setKeywords(data.keywords);
+          }
           setIsLoading(false);
         } else if (data.status === "failed") {
           setIsLoading(false);
@@ -66,11 +96,13 @@ export default function Home() {
     }
   );
 
-  const handleAnalysisSubmit = async (keywords: string[], dataSource: 'xiaohongshu' | 'douyin', deepCrawl: boolean, maxVideos: number) => {
+  const handleAnalysisSubmit = async (submittedKeywords: string[], dataSource: 'xiaohongshu' | 'douyin', deepCrawl: boolean, maxVideos: number) => {
     try {
       setIsLoading(true);
       setJobId(null);
       setResults([]);
+      setRawData(undefined);
+      setKeywords(submittedKeywords);
 
       const response = await fetch('/api/analyze', {
         method: 'POST',
@@ -78,7 +110,7 @@ export default function Home() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          keywords,
+          keywords: submittedKeywords,
           limit: 200,
           dataSource,
           deepCrawl,
@@ -192,7 +224,7 @@ export default function Home() {
           {results.length > 0 && (
             <div className="fade-in space-y-5">
               {/* Header Stats */}
-              <div className="grid grid-cols-3 gap-4 mb-2">
+              <div className="grid grid-cols-4 gap-4 mb-2">
                 <div className="bg-white rounded-2xl p-4 shadow-neuro">
                   <div className="text-gray-400 text-xs font-semibold uppercase">Total Signals</div>
                   <div className="text-2xl font-bold text-[#18181B] mt-1">{totalSignals}</div>
@@ -202,6 +234,7 @@ export default function Home() {
                   <div className="text-2xl font-bold text-[#18181B] mt-1">{results.length}</div>
                 </div>
                 <ExportButton results={results} />
+                <RawDataExportButton rawData={rawData} keywords={keywords} />
               </div>
 
               {/* Card Grid */}

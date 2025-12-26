@@ -4,6 +4,7 @@ export type DataSourceType = 'xiaohongshu' | 'douyin';
 
 export interface DataSourceResult {
   rawTexts: string[];
+  videos?: any[];
   metadata?: any;
 }
 

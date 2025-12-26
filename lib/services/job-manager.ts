@@ -5,6 +5,26 @@ import { DataSourceType } from './data-source-interface';
 import { ClusteringService, ClusterResult } from './clustering-service';
 import { GLMService } from './glm-service';
 
+// 原始视频数据接口
+export interface RawVideoData {
+  title: string;
+  author: string;
+  video_url: string;
+  publish_time?: string;
+  likes: string;
+  collected_at: string;
+  comment_count?: number;
+  description?: string;
+}
+
+// 原始评论数据接口
+export interface RawCommentData {
+  video_title: string;
+  comment_text: string;
+  username: string;
+  likes: string;
+}
+
 export interface Job {
   jobId: string;
   status: 'processing' | 'completed' | 'failed';
@@ -20,6 +40,12 @@ export interface Job {
     videoCount?: number;
     commentCount?: number;
     textCount?: number;
+  };
+  // 原始数据存储
+  rawData?: {
+    videos: RawVideoData[];
+    comments: RawCommentData[];
+    rawTexts: string[];
   };
   error?: string;
 }
@@ -103,6 +129,8 @@ export class JobManager {
 
       // 步骤2: 抓取数据
       const allRawTexts: string[] = [];
+      const allVideos: RawVideoData[] = [];
+      const allComments: RawCommentData[] = [];
       let totalVideoCount = 0;
       let totalCommentCount = 0;
 
@@ -122,24 +150,75 @@ export class JobManager {
           allRawTexts.push(...result.rawTexts);
           totalVideoCount += result.videoCount || 0;
           totalCommentCount += result.commentCount || 0;
+
+          // 保存原始视频数据
+          if (result.videos) {
+            for (const video of result.videos) {
+              allVideos.push({
+                title: video.title || '',
+                author: video.author || '',
+                video_url: video.video_url || '',
+                publish_time: video.publish_time,
+                likes: video.likes || '0',
+                collected_at: video.collected_at || new Date().toISOString(),
+                comment_count: video.comment_count,
+                description: video.description
+              });
+            }
+          }
+
+          // 保存原始评论数据
+          if (result.allComments) {
+            for (const comment of result.allComments) {
+              allComments.push({
+                video_title: comment.video_title || '',
+                comment_text: comment.comment_text || '',
+                username: comment.username || '',
+                likes: comment.likes || '0'
+              });
+            }
+          }
         } else {
           // 标准抓取模式
           this.updateJobStatus(jobId, 'processing', `正在从${sourceName}抓取 "${keyword}" 相关数据...`);
 
-          const { rawTexts } = await dataSourceService.searchAndFetch(
+          const result = await dataSourceService.searchAndFetch(
             keyword,
             Math.floor(job.limit / job.keywords.length)
           );
 
-          allRawTexts.push(...rawTexts);
+          allRawTexts.push(...result.rawTexts);
+
+          // 保存原始视频数据（标准模式）
+          if (result.videos) {
+            for (const video of result.videos) {
+              allVideos.push({
+                title: video.title || '',
+                author: video.author || '',
+                video_url: video.video_url || '',
+                publish_time: video.publish_time,
+                likes: video.likes || '0',
+                collected_at: video.collected_at || new Date().toISOString(),
+                comment_count: video.comment_count,
+                description: video.description
+              });
+            }
+          }
         }
       }
 
       // 保存抓取统计
       job.crawlStats = {
-        videoCount: totalVideoCount,
-        commentCount: totalCommentCount,
+        videoCount: totalVideoCount || allVideos.length,
+        commentCount: totalCommentCount || allComments.length,
         textCount: allRawTexts.length
+      };
+
+      // 保存原始数据
+      job.rawData = {
+        videos: allVideos,
+        comments: allComments,
+        rawTexts: allRawTexts
       };
 
       if (allRawTexts.length === 0) {

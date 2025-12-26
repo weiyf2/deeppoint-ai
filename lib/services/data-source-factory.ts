@@ -33,9 +33,10 @@ class DouyinServiceAdapter implements IDataSourceService {
   }
 
   async searchAndFetch(keywords: string, limit: number): Promise<DataSourceResult> {
-    const { rawTexts } = await this.service.searchVideos(keywords, limit);
+    const { rawTexts, videos } = await this.service.searchVideos(keywords, limit);
     return {
       rawTexts,
+      videos,
       metadata: { source: 'douyin' }
     };
   }

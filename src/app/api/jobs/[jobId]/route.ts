@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { jobManager } from '../../../../../lib/services/job-manager';
+import { jobManager, RawVideoData, RawCommentData } from '../../../../../lib/services/job-manager';
 import { ClusterResult } from '../../../../../lib/services/clustering-service';
 
 export async function GET(
@@ -31,17 +31,28 @@ export async function GET(
       jobId: string;
       status: string;
       progress: string;
+      keywords?: string[];
       results?: ClusterResult[];
+      rawData?: {
+        videos: RawVideoData[];
+        comments: RawCommentData[];
+        rawTexts: string[];
+      };
       error?: string;
     } = {
       jobId: job.jobId,
       status: job.status,
-      progress: job.progress
+      progress: job.progress,
+      keywords: job.keywords
     };
 
     // 如果任务完成，包含结果
     if (job.status === "completed" && job.results) {
       response.results = job.results;
+      // 包含原始数据
+      if (job.rawData) {
+        response.rawData = job.rawData;
+      }
     }
 
     // 如果任务失败，包含错误信息

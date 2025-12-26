@@ -127,7 +127,7 @@ export class DouyinService {
         .map(text => text.trim())
         .filter((text, index, arr) => arr.indexOf(text) === index);
 
-      return { videos: parsedResult.videos, rawTexts: cleanedTexts };
+      return { videos: parsedResult.videos || [], rawTexts: cleanedTexts };
     } catch (error) {
       throw new Error(`抖音数据抓取失败: ${error instanceof Error ? error.message : String(error)}`);
     }
