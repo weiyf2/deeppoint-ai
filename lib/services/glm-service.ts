@@ -65,6 +65,7 @@ export interface DeepAnalysisResult {
 
   // 维度4: 优先级相关
   keyword_relevance: number;
+  market_size_score: number;  // GLM评估的市场规模 0-5
 }
 
 export class GLMService {
@@ -125,7 +126,12 @@ export class GLMService {
 - timeline: 预估开发时间（如"2周开发+1周测试"）
 - estimated_cost: 预估成本（如"1000元广告投放"）
 
-4️⃣ 相关度评估（keyword_relevance）
+4️⃣ 市场规模评估（market_size_score）
+- 该痛点的潜在市场规模有多大？（0-5分）
+  0=极小众（几千人）、1=小众（几万人）、2=中等（几十万人）、3=较大（百万级）、4=大众（千万级）、5=超大众（亿级）
+- 基于你的知识判断受众人群大小，考虑：目标用户群体规模、需求频次、地域覆盖
+
+5️⃣ 相关度评估（keyword_relevance）
 - 该聚类与「${keywords.join('、')}」的相关度？（0-100分）
 - 如果<50分，说明为什么相关度低
 
@@ -171,6 +177,7 @@ ${texts.join('\n\n')}
     "timeline": "时间预估",
     "estimated_cost": "成本预估"
   },
+  "market_size_score": 3,
   "keyword_relevance": 85
 }
 
@@ -261,7 +268,11 @@ ${texts.join('\n\n')}
 
           keyword_relevance: typeof parsed.keyword_relevance === 'number'
             ? parsed.keyword_relevance
-            : 50
+            : 50,
+
+          market_size_score: typeof parsed.market_size_score === 'number'
+            ? Math.min(5, Math.max(0, parsed.market_size_score))
+            : 2.5  // 默认中等规模
         };
 
         return result;
@@ -298,7 +309,8 @@ ${texts.join('\n\n')}
             estimated_cost: '解析失败'
           },
 
-          keyword_relevance: 50
+          keyword_relevance: 50,
+          market_size_score: 2.5
         };
       }
     } catch (apiError) {
@@ -332,7 +344,8 @@ ${texts.join('\n\n')}
           estimated_cost: 'API调用失败'
         },
 
-        keyword_relevance: 50
+        keyword_relevance: 50,
+        market_size_score: 2.5
       };
     }
   }

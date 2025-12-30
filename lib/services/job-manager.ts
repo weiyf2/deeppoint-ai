@@ -367,7 +367,7 @@ export class JobManager {
             clusterSize: cluster.length,
             totalDataSize: allRawTexts.length,
             emotionalIntensity: analysis.pain_depth?.emotional_intensity || 2,
-            keywords: job.keywords,
+            glmMarketScore: analysis.market_size_score || 2.5,
             existingSolutions: analysis.market_landscape?.existing_solutions || []
           });
 

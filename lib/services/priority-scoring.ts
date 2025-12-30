@@ -32,39 +32,32 @@ export class PriorityScorer {
 
   /**
    * 计算市场规模（0-5分）
-   * 基于搜索词热度和数据量
+   * 结合数据维度得分（40%）和 GLM 评估的市场规模（60%）
    */
   calculateMarketSize(
-    keywords: string[],
     clusterSize: number,
-    totalDataSize: number
+    totalDataSize: number,
+    glmMarketScore: number  // GLM 评估的市场规模 0-5
   ): number {
-    // 数据量不足时，给保守估计
-    if (totalDataSize < 50) {
-      return 2.5; // 数据不足，中等评分
+    // 数据维度得分：基于聚类占比和数据量
+    let dataScore = 2.5;  // 基础分
+
+    if (totalDataSize >= 50) {
+      // 数据量充足时，基于聚类占比计算
+      const sizeRatio = clusterSize / totalDataSize;
+      dataScore = Math.min(5, 2.0 + sizeRatio * 15);  // 基础2分，占比加成最多3分
+
+      // 数据量加成
+      if (totalDataSize >= 200) {
+        dataScore = Math.min(5, dataScore + 0.5);
+      } else if (totalDataSize >= 100) {
+        dataScore = Math.min(5, dataScore + 0.3);
+      }
     }
 
-    // 热门关键词列表（启发式）
-    const popularKeywords = [
-      '旅行', '旅游', '健康', '养生', '教育', '学习', '工作', '职场',
-      '娱乐', '游戏', '美食', '运动', '理财', '投资', '购物', '穿搭'
-    ];
+    // 加权计算：数据维度 40% + GLM评估 60%
+    const total = dataScore * 0.4 + glmMarketScore * 0.6;
 
-    // 判断是否为热门领域
-    const isPopular = keywords.some(keyword =>
-      popularKeywords.some(pk => keyword.includes(pk) || pk.includes(keyword))
-    );
-
-    // 基础分
-    let baseScore = isPopular ? 4.0 : 3.0;
-
-    // 数据量加成（数据越多越可信）
-    const dataBoost = totalDataSize >= 200 ? 0.5 : totalDataSize >= 100 ? 0.3 : 0;
-
-    // 聚类size加成（该聚类讨论度高）
-    const sizeBoost = Math.min(0.5, clusterSize / 30);
-
-    const total = Math.min(5, baseScore + dataBoost + sizeBoost);
     return Math.round(total * 10) / 10;
   }
 
@@ -135,7 +128,7 @@ export class PriorityScorer {
     clusterSize: number;
     totalDataSize: number;
     emotionalIntensity: number;
-    keywords: string[];
+    glmMarketScore: number;  // GLM 评估的市场规模 0-5
     existingSolutions: Array<{ name: string; limitation: string }>;
   }): PriorityScore {
     const demandScore = this.calculateDemandIntensity(
@@ -145,9 +138,9 @@ export class PriorityScorer {
     );
 
     const marketScore = this.calculateMarketSize(
-      params.keywords,
       params.clusterSize,
-      params.totalDataSize
+      params.totalDataSize,
+      params.glmMarketScore
     );
 
     const competitionScore = this.calculateCompetition(params.existingSolutions);
