@@ -1,17 +1,24 @@
 # DeepPoint - 用户痛点发现器
 
-一个帮助个人开发者从社交媒体自动发现用户核心痛点的 Web 应用，支持智能聚类分析和 AI 产品方案生成。
+![logo](./assets/logo.png)
 
-<img src="./assets/demo-preview.png" alt="image-20251223210939459" style="zoom: 50%;" />
+一个帮助个人开发者从社交媒体自动发现用户核心痛点的 Web 应用，支持智能聚类分析和 AI 产品方案生成。
 
 ## 功能特性
 
 ### 痛点分析模块
 - 输入关键词自动抓取抖音相关视频和评论
-- 基于文本相似度的智能聚类算法
-- 调用 GLM 大模型分析用户付费意愿
+- 基于 embedding + DBSCAN 的语义聚类算法
+- 调用 GLM-4.6 思考模型深度分析用户痛点
+- **深度分析维度**：
+  - 痛点深度：表面痛点 → 根本原因 → 用户场景 → 情感强度
+  - 市场格局：现有方案 → 未满足需求 → 机会分析
+  - MVP计划：核心功能 → 验证假设 → 首批用户 → 成本估算
+- **优先级评分系统**：需求强度 + 市场规模 + 竞争度综合评估
+- **数据质量分级**：exploratory（<50条）/ preliminary（50-200条）/ reliable（≥200条）
 - 可视化表格展示分析结果
 - 一键导出 CSV 格式报告
+- **原始数据导出**：支持导出爬虫原始数据和聚类后分组数据
 
 ### AI 产品建议模块
 - AI 产品经理角色自动生成产品方案
@@ -24,6 +31,8 @@
 |--------|------|------|
 | 抖音 | 可用 | 基于 DrissionPage 浏览器自动化，支持视频搜索和评论采集 |
 | 小红书 | 暂停 | 测试发现会导致账号被封，暂不建议使用 |
+
+<img src="./assets/demo-preview.png" alt="image-20251223210939459" style="zoom: 50%;" />
 
 ## 快速开始
 
@@ -44,7 +53,9 @@ cd deeppoint-ai
 npm install
 
 # 安装 Python 依赖
-pip install DrissionPage beautifulsoup4 lxml
+pip install -r requirements.txt
+# 或手动安装核心依赖
+pip install DrissionPage beautifulsoup4 lxml scikit-learn numpy python-dotenv
 ```
 
 ### 2. 配置环境变量
@@ -59,6 +70,8 @@ cp .env.example .env.local
 # 智谱AI GLM API配置 (必需)
 # 注册地址: https://open.bigmodel.cn/
 GLM_API_KEY=your_glm_api_key_here
+GLM_MODEL_NAME=glm-4.6
+GLM_EMBEDDING_MODEL=embedding-3
 
 # 浏览器配置 (服务器环境设为 true)
 HEADLESS=false
@@ -106,29 +119,38 @@ deeppoint-ai/
 │   │       ├── analyze/          # 创建分析任务
 │   │       ├── jobs/[jobId]/     # 查询任务状态
 │   │       ├── analyze-ai-product/
-│   │       └── ai-product-jobs/[jobId]/
-│   └── components/
-│       ├── AnalysisForm.tsx      # 分析表单
-│       ├── JobStatus.tsx         # 任务状态显示
-│       ├── ResultsTable.tsx      # 结果表格
-│       ├── DetailModal.tsx       # 痛点详情弹窗
-│       ├── AIProductCard.tsx     # AI产品卡片
-│       ├── AIProductDetailModal.tsx
-│       └── ExportButton.tsx      # CSV导出
+│   │       ├── ai-product-jobs/[jobId]/
+│   │       └── health/           # 健康检查
+│   ├── components/
+│   │   ├── AnalysisForm.tsx      # 分析表单
+│   │   ├── JobStatus.tsx         # 任务状态显示
+│   │   ├── ResultsTable.tsx      # 结果表格
+│   │   ├── DetailModal.tsx       # 痛点详情弹窗
+│   │   ├── LoadingAnimation.tsx  # 加载动画
+│   │   ├── DataQualityBanner.tsx # 数据质量提示
+│   │   ├── AIProductCard.tsx     # AI产品卡片
+│   │   ├── AIProductDetailModal.tsx
+│   │   ├── ExportButton.tsx      # CSV导出
+│   │   └── RawDataExportButton.tsx # 原始数据导出
+│   └── lib/
+│       └── design-tokens.ts      # 设计系统标记
 ├── lib/
 │   ├── services/
+│   │   ├── job-manager.ts        # 任务管理核心
 │   │   ├── douyin-service.ts     # 抖音数据服务
 │   │   ├── xhs-service.ts        # 小红书服务(暂停)
 │   │   ├── glm-service.ts        # GLM大模型服务
-│   │   ├── clustering-service.ts # 文本聚类
-│   │   ├── job-manager.ts        # 任务管理
+│   │   ├── clustering-service.ts # 聚类服务(Python集成)
+│   │   ├── priority-scoring.ts   # 优先级评分系统
 │   │   ├── ai-product-service.ts # AI产品分析
 │   │   ├── ai-product-job-manager.ts
 │   │   ├── data-source-factory.ts
 │   │   └── data-source-interface.ts
 │   ├── utils/
 │   │   └── python-detector.ts    # Python命令检测
-│   └── douyin_tool.py            # 抖音爬虫脚本
+│   ├── douyin_tool.py            # 抖音爬虫脚本
+│   ├── xiaohongshu_tool.py       # 小红书爬虫脚本(暂停)
+│   └── semantic_clustering.py    # 语义聚类(embedding + DBSCAN)
 ├── .env.example                  # 环境变量模板
 ├── package.json
 ├── requirements.txt              # Python依赖
@@ -144,8 +166,8 @@ deeppoint-ai/
 | 数据请求 | SWR (轮询任务状态) |
 | 后端 | Next.js API Routes |
 | 数据采集 | Python + DrissionPage |
-| AI 分析 | 智谱 GLM-4 |
-| 聚类算法 | 基于 Jaccard 相似度 |
+| AI 分析 | 智谱 GLM-4.6（思考模型）+ embedding-3 |
+| 聚类算法 | 基于 embedding + DBSCAN 语义聚类 |
 
 ## API 配置
 
@@ -177,7 +199,6 @@ A: 暂不建议使用，测试发现会导致账号被封禁。
 - [x] 深度抓取（含评论）
 - [ ] 更多数据源（知乎、微博）
 - [ ] 历史记录保存
-- [ ] 数据可视化图表
 
 ## 许可证
 
