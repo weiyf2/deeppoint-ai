@@ -32,7 +32,13 @@
 | 抖音 | 可用 | 基于 DrissionPage 浏览器自动化，支持视频搜索和评论采集 |
 | 小红书 | 暂停 | 测试发现会导致账号被封，暂不建议使用 |
 
-<img src="./assets/demo-preview.png" alt="image-20251223210939459" style="zoom: 50%;" />
+## 运行预览
+
+> 更多界面截图与资源文件，请浏览 [ assets 文件夹](./assets/)。
+
+<img src="./assets/demo-preview-result.png" alt="image-20251223210939459" style="zoom: 63%;" />
+
+<img src="./assets/demo-preview-result1.png" alt="image-20251223210939459" style="zoom: 63%;" />
 
 ## 快速开始
 
