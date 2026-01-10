@@ -11,8 +11,16 @@ scikit-learn>=1.3.0
 curl-cffi>=0.5.0
 pyexecjs>=1.5.1
 
-# 抖音数据采集依赖
+# 抖音数据采集依赖 (旧版)
 DrissionPage>=4.0.0
 beautifulsoup4>=4.12.0
 lxml>=4.9.0
 
+# 新版抖音爬虫依赖
+httpx==0.28.1
+playwright>=1.45.0
+pydantic>=2.5.2
+tenacity>=8.2.2
+aiofiles>=23.2.1
+typer>=0.12.3
+openpyxl>=3.1.2

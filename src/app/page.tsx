@@ -3,7 +3,7 @@
 import { useState } from "react";
 import useSWR from "swr";
 import Link from "next/link";
-import AnalysisForm from "@/components/AnalysisForm";
+import AnalysisForm, { DouyinNewConfig } from "@/components/AnalysisForm";
 import LoadingAnimation from "@/components/LoadingAnimation";
 import ResultsTable from "@/components/ResultsTable";
 import DetailModal from "@/components/DetailModal";
@@ -151,7 +151,13 @@ export default function Home() {
     }
   );
 
-  const handleAnalysisSubmit = async (submittedKeywords: string[], dataSource: 'xiaohongshu' | 'douyin', deepCrawl: boolean, maxVideos: number) => {
+  const handleAnalysisSubmit = async (
+    submittedKeywords: string[],
+    dataSource: 'xiaohongshu' | 'douyin' | 'douyin_new',
+    deepCrawl: boolean,
+    maxVideos: number,
+    douyinNewConfig?: DouyinNewConfig
+  ) => {
     try {
       setIsLoading(true);
       setJobId(null);
@@ -170,7 +176,8 @@ export default function Home() {
           limit: 200,
           dataSource,
           deepCrawl,
-          maxVideos
+          maxVideos,
+          douyinNewConfig  // 新版抖音配置
         }),
       });
 

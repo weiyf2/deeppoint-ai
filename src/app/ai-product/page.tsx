@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import useSWR from "swr";
-import AnalysisForm from "@/components/AnalysisForm";
+import AnalysisForm, { DataSourceType, DouyinNewConfig } from "@/components/AnalysisForm";
 import JobStatus from "@/components/JobStatus";
 import AIProductCard from "@/components/AIProductCard";
 import AIProductDetailModal from "@/components/AIProductDetailModal";
@@ -72,7 +72,13 @@ export default function AIProductPage() {
     }
   );
 
-  const handleAnalysisSubmit = async (keywords: string[], dataSource: 'xiaohongshu' | 'douyin') => {
+  const handleAnalysisSubmit = async (
+    keywords: string[],
+    dataSource: DataSourceType,
+    deepCrawl: boolean,
+    maxVideos: number,
+    douyinNewConfig?: DouyinNewConfig
+  ) => {
     try {
       setIsLoading(true);
       setJobId(null);
@@ -86,7 +92,10 @@ export default function AIProductPage() {
         body: JSON.stringify({
           keywords,
           limit: 50,
-          dataSource
+          dataSource,
+          deepCrawl,
+          maxVideos,
+          douyinNewConfig
         }),
       });
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jobManager } from '../../../../lib/services/job-manager';
-import { DataSourceType } from '../../../../lib/services/data-source-interface';
+import { DataSourceType, DouyinNewCrawlOptions } from '../../../../lib/services/data-source-interface';
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,7 +10,8 @@ export async function POST(request: NextRequest) {
       limit = 200,
       dataSource = 'xiaohongshu',
       deepCrawl = false,
-      maxVideos = 10
+      maxVideos = 10,
+      douyinNewConfig  // 新版抖音配置
     } = body;
 
     // 验证输入
@@ -31,13 +32,38 @@ export async function POST(request: NextRequest) {
     }
 
     // 验证数据源
-    const validDataSource: DataSourceType = dataSource === 'douyin' ? 'douyin' : 'xiaohongshu';
+    let validDataSource: DataSourceType;
+    if (dataSource === 'douyin') {
+      validDataSource = 'douyin';
+    } else if (dataSource === 'douyin_new') {
+      validDataSource = 'douyin_new';
+    } else {
+      validDataSource = 'xiaohongshu';
+    }
 
-    // 深度抓取只支持抖音
-    const enableDeepCrawl = deepCrawl && validDataSource === 'douyin';
+    // 深度抓取支持抖音和新版抖音
+    const enableDeepCrawl = deepCrawl && (validDataSource === 'douyin' || validDataSource === 'douyin_new');
+
+    // 新版抖音的完整配置
+    let douyinNewOptions: DouyinNewCrawlOptions | undefined;
+    if (validDataSource === 'douyin_new' && douyinNewConfig) {
+      douyinNewOptions = {
+        enableComments: douyinNewConfig.enableComments ?? true,
+        maxVideos: douyinNewConfig.maxVideos ?? 15,
+        maxCommentsPerVideo: douyinNewConfig.maxCommentsPerVideo ?? 20,
+        enableSubComments: douyinNewConfig.enableSubComments ?? false
+      };
+    }
 
     // 创建分析任务
-    const jobId = jobManager.createJob(validKeywords, limit, validDataSource, enableDeepCrawl, maxVideos);
+    const jobId = jobManager.createJob(
+      validKeywords,
+      limit,
+      validDataSource,
+      enableDeepCrawl,
+      maxVideos,
+      douyinNewOptions
+    );
 
     // 立即返回任务ID，不等待任务完成
     return NextResponse.json(

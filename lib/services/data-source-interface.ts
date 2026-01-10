@@ -1,6 +1,6 @@
 // 通用数据源接口定义
 
-export type DataSourceType = 'xiaohongshu' | 'douyin';
+export type DataSourceType = 'xiaohongshu' | 'douyin' | 'douyin_new';
 
 export interface DataSourceResult {
   rawTexts: string[];
@@ -19,6 +19,14 @@ export interface DeepCrawlResult {
 export interface DeepCrawlOptions {
   maxVideos?: number;
   maxCommentsPerVideo?: number;
+}
+
+// 新版抖音爬虫配置选项
+export interface DouyinNewCrawlOptions {
+  enableComments: boolean;        // 是否爬取评论
+  maxVideos: number;              // 视频数量 (5-30)
+  maxCommentsPerVideo: number;    // 每视频评论数 (10-50)
+  enableSubComments: boolean;     // 是否爬取二级评论
 }
 
 export interface IDataSourceService {

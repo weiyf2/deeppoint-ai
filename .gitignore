@@ -70,3 +70,7 @@ credentials.json
 *.key
 *.pem
 secrets/
+
+# Crawler runtime data (never commit)
+lib/crawlers/douyin_new/browser_data/
+lib/crawlers/douyin_new/data/

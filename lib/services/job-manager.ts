@@ -1,7 +1,7 @@
 // 任务管理服务
 import { v4 as uuidv4 } from 'uuid';
 import { DataSourceFactory } from './data-source-factory';
-import { DataSourceType } from './data-source-interface';
+import { DataSourceType, DouyinNewCrawlOptions } from './data-source-interface';
 import { ClusteringService, ClusterResult } from './clustering-service';
 import { GLMService } from './glm-service';
 import { PriorityScorer, PriorityScore } from './priority-scoring';
@@ -43,6 +43,7 @@ export interface Job {
   dataSource: DataSourceType;
   deepCrawl: boolean;  // 是否深度抓取（含评论）
   maxVideos?: number;  // 深度抓取时的最大视频数
+  douyinNewOptions?: DouyinNewCrawlOptions;  // 新版抖音完整配置
   startTime: number;
   results?: ClusterResult[];
   crawlStats?: {       // 抓取统计
@@ -89,7 +90,14 @@ export class JobManager {
   }
 
   // 创建新任务
-  public createJob(keywords: string[], limit: number = 200, dataSource: DataSourceType = 'xiaohongshu', deepCrawl: boolean = false, maxVideos: number = 10): string {
+  public createJob(
+    keywords: string[],
+    limit: number = 200,
+    dataSource: DataSourceType = 'xiaohongshu',
+    deepCrawl: boolean = false,
+    maxVideos: number = 10,
+    douyinNewOptions?: DouyinNewCrawlOptions
+  ): string {
     const jobId = uuidv4();
     const job: Job = {
       jobId,
@@ -100,6 +108,7 @@ export class JobManager {
       dataSource,
       deepCrawl,
       maxVideos,
+      douyinNewOptions,
       startTime: Date.now()
     };
 
@@ -164,10 +173,18 @@ export class JobManager {
           // 深度抓取模式（含评论）
           this.updateJobStatus(jobId, 'processing', `正在深度抓取 "${keyword}" 相关数据（含评论）...`);
 
-          const result = await dataSourceService.searchWithComments(keyword, {
-            maxVideos: job.maxVideos || 10,
-            maxCommentsPerVideo: 30
-          });
+          // 为新版抖音使用完整配置
+          const crawlOptions = job.dataSource === 'douyin_new' && job.douyinNewOptions
+            ? {
+                maxVideos: job.douyinNewOptions.maxVideos,
+                maxCommentsPerVideo: job.douyinNewOptions.maxCommentsPerVideo
+              }
+            : {
+                maxVideos: job.maxVideos || 10,
+                maxCommentsPerVideo: 30
+              };
+
+          const result = await dataSourceService.searchWithComments(keyword, crawlOptions);
 
           allRawTexts.push(...result.rawTexts);
           totalVideoCount += result.videoCount || 0;

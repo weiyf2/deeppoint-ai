@@ -29,7 +29,8 @@
 
 | 数据源 | 状态 | 说明 |
 |--------|------|------|
-| 抖音 | 可用 | 基于 DrissionPage 浏览器自动化，支持视频搜索和评论采集 |
+| 抖音 - 旧版 | 可用 | 基于 DrissionPage 浏览器自动化，支持视频搜索和评论采集 |
+| 抖音 - 新版 | 可用 | 基于 Playwright + CDP，反检测能力更强，首次需扫码登录 |
 | 小红书 | 暂停 | 测试发现会导致账号被封，暂不建议使用 |
 
 ## 运行预览
@@ -61,6 +62,10 @@ npm install
 
 # 安装 Python 依赖
 pip install -r requirements.txt
+
+# 如果使用新版抖音数据源，还需安装浏览器
+playwright install chromium
+
 # 或手动安装核心依赖
 pip install DrissionPage beautifulsoup4 lxml scikit-learn numpy python-dotenv
 ```
@@ -101,11 +106,13 @@ npm run start
 
 ### 痛点分析（主页）
 
-1. 选择数据源（推荐使用抖音）
+1. 选择数据源（推荐使用新版抖音）
 2. 输入关键词，多个用逗号分隔，如：`露营, 新手, 装备`
-3. 可选开启「深度抓取」获取视频评论（更耗时但数据更丰富）
+3. 可选开启获取视频评论（更耗时但数据更丰富）
 4. 点击开始分析，等待结果
 5. 点击任意行查看详细原文，或导出 CSV
+
+> **新版抖音说明**：首次使用时会弹出浏览器窗口，需要扫码登录抖音。登录状态会自动保存，后续无需重复登录。
 
 ### AI 产品建议（/ai-product）
 
@@ -142,6 +149,8 @@ deeppoint-ai/
 │   └── lib/
 │       └── design-tokens.ts      # 设计系统标记
 ├── lib/
+│   ├── crawlers/
+│   │   └── douyin_new/           # 新版抖音爬虫模块
 │   ├── services/
 │   │   ├── job-manager.ts        # 任务管理核心
 │   │   ├── douyin-service.ts     # 抖音数据服务
@@ -172,7 +181,7 @@ deeppoint-ai/
 | 样式 | Tailwind CSS 4 |
 | 数据请求 | SWR (轮询任务状态) |
 | 后端 | Next.js API Routes |
-| 数据采集 | Python + DrissionPage |
+| 数据采集 | Python + DrissionPage / Playwright |
 | AI 分析 | 智谱 GLM-4.6（思考模型）+ embedding-3 |
 | 聚类算法 | 基于 embedding + DBSCAN 语义聚类 |
 
@@ -209,8 +218,10 @@ A: 暂不建议使用，测试发现会导致账号被封禁。
 
 ## 许可证
 
-MIT License
+本项目采用 MIT License。
+
+**注意**：`lib/crawlers/douyin_new/` 目录下的爬虫代码基于 MediaCrawler 项目，采用 NON-COMMERCIAL LEARNING LICENSE 1.1 许可，仅限非商业学习研究用途。
 
 ## 致谢
 
-- 抖音数据获取参考 [undoom-douyin-data-analysis](https://github.com/undoom/douyin-data-analysis)
+- 新版抖音爬虫基于 [MediaCrawler](https://github.com/NanmiCoder/MediaCrawler)（NON-COMMERCIAL LEARNING LICENSE 1.1，仅供学习研究使用）
