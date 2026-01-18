@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from 'next-intl';
 import { CheckCircle, AlertTriangle, Info } from 'lucide-react';
 
 interface DataQualityInfo {
@@ -12,6 +15,7 @@ interface DataQualityBannerProps {
 }
 
 export default function DataQualityBanner({ dataQuality }: DataQualityBannerProps) {
+  const t = useTranslations('dataQuality');
   const { level, totalDataSize, clusterCount, averageClusterSize } = dataQuality;
 
   // 统一使用琥珀色系，通过明度区分等级
@@ -23,8 +27,6 @@ export default function DataQualityBanner({ dataQuality }: DataQualityBannerProp
       iconColor: 'text-amber-600',
       textColor: 'text-amber-800',
       badgeColor: 'bg-amber-100 text-amber-700',
-      title: '可靠样本',
-      message: '数据规模充足，分析结果具有较高可信度',
       Icon: CheckCircle
     },
     preliminary: {
@@ -34,8 +36,6 @@ export default function DataQualityBanner({ dataQuality }: DataQualityBannerProp
       iconColor: 'text-amber-500',
       textColor: 'text-amber-700',
       badgeColor: 'bg-amber-100/70 text-amber-600',
-      title: '初步验证',
-      message: '数据规模中等，建议增加数据量以提升分析可信度',
       Icon: AlertTriangle
     },
     exploratory: {
@@ -45,8 +45,6 @@ export default function DataQualityBanner({ dataQuality }: DataQualityBannerProp
       iconColor: 'text-amber-600',
       textColor: 'text-amber-800',
       badgeColor: 'bg-amber-100 text-amber-700',
-      title: '小样本探索',
-      message: '数据规模较小，仅供探索性参考，强烈建议扩大样本量',
       Icon: Info
     }
   };
@@ -66,33 +64,33 @@ export default function DataQualityBanner({ dataQuality }: DataQualityBannerProp
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span className={`text-sm font-semibold ${config.textColor}`}>
-              数据质量：{config.title}
+              {t(`${level}.title`)}
             </span>
             <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${config.badgeColor}`}>
-              {totalDataSize} 条数据
+              {t('dataCount', { count: totalDataSize })}
             </span>
           </div>
 
           <p className={`text-xs ${config.textColor} opacity-80 mb-3`}>
-            {config.message}
+            {t(`${level}.message`)}
           </p>
 
           {/* 数据统计 */}
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-white/50 rounded-lg px-3 py-2">
-              <div className="text-xs text-neutral-500 font-medium">数据总量</div>
+              <div className="text-xs text-neutral-500 font-medium">{t('stats.totalData')}</div>
               <div className={`text-lg font-bold ${config.textColor}`}>
                 {totalDataSize}
               </div>
             </div>
             <div className="bg-white/50 rounded-lg px-3 py-2">
-              <div className="text-xs text-neutral-500 font-medium">聚类数</div>
+              <div className="text-xs text-neutral-500 font-medium">{t('stats.clusterCount')}</div>
               <div className={`text-lg font-bold ${config.textColor}`}>
                 {clusterCount}
               </div>
             </div>
             <div className="bg-white/50 rounded-lg px-3 py-2">
-              <div className="text-xs text-neutral-500 font-medium">平均聚类大小</div>
+              <div className="text-xs text-neutral-500 font-medium">{t('stats.avgClusterSize')}</div>
               <div className={`text-lg font-bold ${config.textColor}`}>
                 {averageClusterSize}
               </div>
@@ -107,11 +105,11 @@ export default function DataQualityBanner({ dataQuality }: DataQualityBannerProp
           <div className="flex items-start gap-2">
             <Info className={`w-4 h-4 ${config.iconColor} flex-shrink-0 mt-0.5`} />
             <div className={`text-xs ${config.textColor}`}>
-              <span className="font-semibold">建议：</span>
+              <span className="font-semibold">{t('suggestion')}:</span>
               {level === 'exploratory' ? (
-                <span> 当前数据量较少（&lt;50条），建议使用更相关的关键词或增加抓取数量以获得更可靠的分析结果</span>
+                <span> {t('exploratoryHint')}</span>
               ) : (
-                <span> 增加数据量至200+条以获得更稳定的聚类结果和更可靠的分析建议</span>
+                <span> {t('preliminaryHint')}</span>
               )}
             </div>
           </div>

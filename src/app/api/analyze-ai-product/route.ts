@@ -5,7 +5,7 @@ import { DataSourceType } from '../../../../lib/services/data-source-interface';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { keywords, limit = 50, dataSource = 'xiaohongshu' } = body;
+    const { keywords, limit = 50, dataSource = 'xiaohongshu', locale = 'zh' } = body;
 
     // 验证输入
     if (!keywords || !Array.isArray(keywords) || keywords.length === 0) {
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     const validDataSource: DataSourceType = dataSource === 'douyin' ? 'douyin' : 'xiaohongshu';
 
     // 创建AI产品分析任务
-    const jobId = aiProductJobManager.createJob(validKeywords, limit, validDataSource);
+    const jobId = aiProductJobManager.createJob(validKeywords, limit, validDataSource, locale);
 
     // 立即返回任务ID，不等待任务完成
     return NextResponse.json(

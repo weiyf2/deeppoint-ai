@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from 'next-intl';
 
 export type DataSourceType = 'xiaohongshu' | 'douyin' | 'douyin_new';
 
@@ -24,8 +25,9 @@ interface AnalysisFormProps {
 }
 
 export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps) {
+  const t = useTranslations('form');
   const [keywords, setKeywords] = useState("");
-  const [dataSource, setDataSource] = useState<DataSourceType>('douyin');
+  const [dataSource, setDataSource] = useState<DataSourceType>('douyin_new');
   const [deepCrawl, setDeepCrawl] = useState(false);
   const [maxVideos, setMaxVideos] = useState(5);
 
@@ -61,9 +63,9 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
 
   const getSourceDisplayName = () => {
     switch (dataSource) {
-      case 'xiaohongshu': return '小红书';
-      case 'douyin': return '抖音(旧版)';
-      case 'douyin_new': return '新版抖音';
+      case 'xiaohongshu': return t('dataSource.xiaohongshu');
+      case 'douyin': return t('dataSource.douyinOld');
+      case 'douyin_new': return t('dataSource.douyinNew');
       default: return dataSource;
     }
   };
@@ -73,7 +75,7 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
       {/* 数据源选择 */}
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-2">
-          数据源 / Source
+          {t('dataSource.label')}
         </label>
         <div className="relative">
           <select
@@ -87,9 +89,9 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
             disabled={isLoading}
             className="w-full bg-[#FBFBF9] text-[#18181B] font-medium py-3 px-4 rounded-xl appearance-none border border-transparent focus:border-[#18181B] focus:bg-white focus:ring-0 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <option value="xiaohongshu" disabled className="text-gray-400">小红书 - 开发中</option>
-            <option value="douyin">抖音 - 旧版</option>
-            <option value="douyin_new">抖音 - 新版</option>
+            <option value="douyin_new">{t('dataSource.douyinNew')}</option>
+            <option value="douyin">{t('dataSource.douyinOld')}</option>
+            <option value="xiaohongshu" disabled className="text-gray-400">{t('dataSource.xiaohongshu')}</option>
           </select>
           <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -102,7 +104,7 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
       {/* 关键词输入 */}
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-2">
-          关键词 / Keyword
+          {t('keywords.label')}
         </label>
         <input
           type="text"
@@ -110,7 +112,7 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
           value={keywords}
           onChange={(e) => setKeywords(e.target.value)}
           disabled={isLoading}
-          placeholder="例如：钓鱼, 露营, 装备"
+          placeholder={t('keywords.placeholder')}
           className="w-full bg-[#FBFBF9] text-[#18181B] font-medium py-3 px-4 rounded-xl border border-transparent outline-none focus:bg-amber-50 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 placeholder-gray-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
         />
       </div>
@@ -123,8 +125,8 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
             className="flex items-center justify-between group cursor-pointer"
           >
             <div className="pointer-events-none">
-              <span className="block text-sm font-bold text-[#18181B]">深度挖掘</span>
-              <span className="text-xs text-gray-400">包含评论区观点分析</span>
+              <span className="block text-sm font-bold text-[#18181B]">{t('deepCrawl.title')}</span>
+              <span className="text-xs text-gray-400">{t('deepCrawl.description')}</span>
             </div>
             <div className="relative inline-flex items-center">
               <input
@@ -142,9 +144,9 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
           {deepCrawl && (
             <div className="pt-2 border-t border-[#E5E4DE]">
               <div className="flex justify-between items-center mb-3">
-                <label className="text-xs font-bold text-gray-500 uppercase">分析深度</label>
+                <label className="text-xs font-bold text-gray-500 uppercase">{t('analysisDepth')}</label>
                 <span className="text-xs font-mono bg-white px-2 py-0.5 rounded shadow-sm">
-                  {maxVideos} clips
+                  {maxVideos} {t('units.clips')}
                 </span>
               </div>
               <input
@@ -158,8 +160,8 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
                 className="w-full"
               />
               <div className="flex justify-between text-[10px] text-gray-400 mt-2 font-medium">
-                <span>Speed (Fast)</span>
-                <span>Accuracy (Slow)</span>
+                <span>{t('speedFast')}</span>
+                <span>{t('accuracySlow')}</span>
               </div>
             </div>
           )}
@@ -169,13 +171,13 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
       {/* 新版抖音配置面板 */}
       {dataSource === 'douyin_new' && (
         <div className="p-4 bg-[#FBFBF9] rounded-xl space-y-4">
-          <div className="text-sm font-bold text-[#18181B] mb-2">新版抖音配置</div>
+          <div className="text-sm font-bold text-[#18181B] mb-2">{t('douyinNewConfig.title')}</div>
 
           {/* 爬取评论开关 */}
           <label className="flex items-center justify-between group cursor-pointer">
             <div className="pointer-events-none">
-              <span className="block text-sm font-medium text-[#18181B]">爬取评论</span>
-              <span className="text-xs text-gray-400">包含用户评论数据</span>
+              <span className="block text-sm font-medium text-[#18181B]">{t('douyinNewConfig.enableComments')}</span>
+              <span className="text-xs text-gray-400">{t('douyinNewConfig.enableCommentsDesc')}</span>
             </div>
             <div className="relative inline-flex items-center">
               <input
@@ -196,9 +198,9 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
             {/* 视频数量滑块 */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="text-xs font-bold text-gray-500 uppercase">视频数量</label>
+                <label className="text-xs font-bold text-gray-500 uppercase">{t('douyinNewConfig.videoCount')}</label>
                 <span className="text-xs font-mono bg-white px-2 py-0.5 rounded shadow-sm">
-                  {douyinNewConfig.maxVideos} 个
+                  {douyinNewConfig.maxVideos} {t('units.videos')}
                 </span>
               </div>
               <input
@@ -223,9 +225,9 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
             {douyinNewConfig.enableComments && (
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase">每视频评论数</label>
+                  <label className="text-xs font-bold text-gray-500 uppercase">{t('douyinNewConfig.commentsPerVideo')}</label>
                   <span className="text-xs font-mono bg-white px-2 py-0.5 rounded shadow-sm">
-                    {douyinNewConfig.maxCommentsPerVideo} 条
+                    {douyinNewConfig.maxCommentsPerVideo} {t('units.comments')}
                   </span>
                 </div>
                 <input
@@ -251,8 +253,8 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
             {douyinNewConfig.enableComments && (
               <label className="flex items-center justify-between group cursor-pointer pt-2 border-t border-[#E5E4DE]">
                 <div className="pointer-events-none">
-                  <span className="block text-sm font-medium text-[#18181B]">二级评论</span>
-                  <span className="text-xs text-gray-400">爬取评论的回复</span>
+                  <span className="block text-sm font-medium text-[#18181B]">{t('douyinNewConfig.subComments')}</span>
+                  <span className="text-xs text-gray-400">{t('douyinNewConfig.subCommentsDesc')}</span>
                 </div>
                 <div className="relative inline-flex items-center">
                   <input
@@ -282,14 +284,14 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
         {isLoading ? (
           <>
             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            <span>正在分析...</span>
+            <span>{t('submit.analyzing')}</span>
           </>
         ) : (
           <>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
-            开始智能分析
+            {t('submit.start')}
           </>
         )}
       </button>
@@ -297,17 +299,17 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
       {/* 提示信息 */}
       {keywords.trim() && (
         <div className="text-xs text-gray-500 text-center">
-          将从 <strong className="text-[#18181B]">{getSourceDisplayName()}</strong>
+          {t('hint.from')} <strong className="text-[#18181B]">{getSourceDisplayName()}</strong>
           {dataSource === 'douyin' && deepCrawl && (
-            <span className="text-amber-600"> (深度抓取{maxVideos}个视频)</span>
+            <span className="text-amber-600"> {t('hint.deepCrawl', { count: maxVideos })}</span>
           )}
           {dataSource === 'douyin_new' && (
             <span className="text-amber-600">
-              {' '}({douyinNewConfig.maxVideos}个视频
-              {douyinNewConfig.enableComments && `, 每个${douyinNewConfig.maxCommentsPerVideo}条评论`})
+              {' '}{t('hint.videos', { count: douyinNewConfig.maxVideos })}
+              {douyinNewConfig.enableComments && t('hint.comments', { count: douyinNewConfig.maxCommentsPerVideo })}
             </span>
           )}
-          {' '}分析
+          {' '}{t('hint.analyze')}
         </div>
       )}
     </form>

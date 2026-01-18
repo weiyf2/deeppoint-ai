@@ -11,7 +11,8 @@ export async function POST(request: NextRequest) {
       dataSource = 'xiaohongshu',
       deepCrawl = false,
       maxVideos = 10,
-      douyinNewConfig  // 新版抖音配置
+      douyinNewConfig,  // 新版抖音配置
+      locale = 'zh'  // 输出语言
     } = body;
 
     // 验证输入
@@ -62,7 +63,8 @@ export async function POST(request: NextRequest) {
       validDataSource,
       enableDeepCrawl,
       maxVideos,
-      douyinNewOptions
+      douyinNewOptions,
+      locale
     );
 
     // 立即返回任务ID，不等待任务完成

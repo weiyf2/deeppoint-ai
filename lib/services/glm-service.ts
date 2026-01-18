@@ -89,7 +89,8 @@ export class GLMService {
   async analyzeCluster(
     texts: string[],
     keywords: string[],
-    dataSize: number
+    dataSize: number,
+    locale: string = 'zh'
   ): Promise<DeepAnalysisResult> {
     // 数据质量评估
     const qualityLevel = dataSize < 50 ? '小样本探索' :
@@ -181,7 +182,10 @@ ${texts.join('\n\n')}
   "keyword_relevance": 85
 }
 
-请确保返回的是纯JSON格式，不要包含markdown代码块标记。`;
+请确保返回的是纯JSON格式，不要包含markdown代码块标记。
+
+【输出语言】
+请使用${locale === 'en' ? '英文' : '中文'}输出所有分析内容（JSON字段名保持英文不变，只翻译字段值）。`;
 
     const request: GLMRequest = {
       model: this.model,

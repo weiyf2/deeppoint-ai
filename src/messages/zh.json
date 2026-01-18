@@ -1,0 +1,262 @@
+{
+  "metadata": {
+    "title": "DeepPoint - Insight Intelligence",
+    "description": "从社交媒体发现用户痛点，智能分析产品机会"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "aiProduct": "AI Product"
+  },
+  "home": {
+    "title": "开始探索",
+    "subtitle": "Define your target",
+    "emptyState": {
+      "title": "等待输入",
+      "description": "在左侧设置参数以生成用户痛点报告"
+    },
+    "stats": {
+      "totalSignals": "Total Signals",
+      "painPoints": "Pain Points"
+    }
+  },
+  "form": {
+    "dataSource": {
+      "label": "数据源 / Source",
+      "xiaohongshu": "小红书 - 开发中",
+      "douyinOld": "抖音 - 旧版",
+      "douyinNew": "抖音 - 新版"
+    },
+    "keywords": {
+      "label": "关键词 / Keyword",
+      "placeholder": "例如：钓鱼, 露营, 装备"
+    },
+    "deepCrawl": {
+      "title": "深度挖掘",
+      "description": "包含评论区观点分析"
+    },
+    "analysisDepth": "分析深度",
+    "speedFast": "Speed (Fast)",
+    "accuracySlow": "Accuracy (Slow)",
+    "douyinNewConfig": {
+      "title": "新版抖音配置",
+      "enableComments": "爬取评论",
+      "enableCommentsDesc": "包含用户评论数据",
+      "videoCount": "视频数量",
+      "commentsPerVideo": "每视频评论数",
+      "subComments": "二级评论",
+      "subCommentsDesc": "爬取评论的回复"
+    },
+    "submit": {
+      "analyzing": "正在分析...",
+      "start": "开始智能分析"
+    },
+    "hint": {
+      "from": "将从",
+      "analyze": "分析",
+      "deepCrawl": "(深度抓取{count}个视频)",
+      "videos": "({count}个视频",
+      "comments": ", 每个{count}条评论)"
+    },
+    "units": {
+      "videos": "个",
+      "comments": "条",
+      "clips": "clips"
+    }
+  },
+  "loading": {
+    "initializing": "正在初始化...",
+    "stages": {
+      "dataStream": {
+        "title": "数据采集中",
+        "badge": "抓取内容",
+        "step": "Step 1/4"
+      },
+      "fluid": {
+        "title": "语义处理中",
+        "badge": "特征提取",
+        "step": "Step 2/4"
+      },
+      "crystal": {
+        "title": "智能聚类中",
+        "badge": "AI 运算",
+        "step": "Step 3/4"
+      },
+      "neural": {
+        "title": "深度分析中",
+        "badge": "LLM 推理",
+        "step": "Step 4/4"
+      }
+    },
+    "logs": {
+      "initializing": "正在准备分析环境...",
+      "validating": "正在验证数据源连接...",
+      "crawling": "正在抓取「{keyword}」相关内容...",
+      "crawlingDefault": "正在抓取相关内容...",
+      "semanticAnalysis": "正在分析文本语义特征...",
+      "processingVideos": "正在处理 {count} 条视频内容...",
+      "processingComments": "正在处理 {count} 条评论内容...",
+      "llmAnalysis": "AI 正在深度理解用户痛点...",
+      "analyzingCluster": "正在分析第 {current} 个痛点聚类...",
+      "processing": "正在处理中..."
+    }
+  },
+  "results": {
+    "viewDetails": "查看详情",
+    "signals": "signals",
+    "overallIndex": "综合指数"
+  },
+  "detail": {
+    "tabs": {
+      "pain": "痛点分析",
+      "market": "市场格局",
+      "mvp": "MVP方案",
+      "source": "原文依据"
+    },
+    "painAnalysis": {
+      "surfacePain": "表面痛点",
+      "rootCauses": "根因分析（3个'为什么'）",
+      "userScenarios": "用户场景",
+      "emotionalIntensity": "情绪强度",
+      "strongIntent": "STRONG INTENT",
+      "moderate": "MODERATE",
+      "weak": "WEAK",
+      "noData": "暂无痛点深度分析数据"
+    },
+    "marketLandscape": {
+      "existingSolutions": "现有解决方案",
+      "limitation": "局限",
+      "unmetNeeds": "未满足的需求",
+      "marketOpportunity": "市场机会",
+      "noData": "暂无市场格局分析数据"
+    },
+    "mvpPlan": {
+      "aiProductIdea": "AI 产品构想",
+      "coreFeatures": "核心功能",
+      "validationHypotheses": "验证假设",
+      "hypothesis": "假设",
+      "testMethod": "测试方法",
+      "firstUsers": "首批用户",
+      "timeline": "时间预估",
+      "estimatedCost": "成本预估",
+      "noData": "暂无MVP方案数据"
+    },
+    "sourceData": {
+      "analysisRationale": "分析依据",
+      "sampleCount": "样本数量",
+      "sourceCount": "原文数量",
+      "relevance": "相关度",
+      "representativeTexts": "代表性原文"
+    },
+    "priority": {
+      "demandIntensity": "需求强度",
+      "marketSize": "市场规模",
+      "competition": "竞争程度",
+      "overallIndex": "综合推荐指数",
+      "blueOcean": "蓝海",
+      "redOcean": "红海",
+      "moderate": "中等"
+    },
+    "close": "关闭"
+  },
+  "dataQuality": {
+    "reliable": {
+      "title": "可靠样本",
+      "message": "数据规模充足，分析结果具有较高可信度"
+    },
+    "preliminary": {
+      "title": "初步验证",
+      "message": "数据规模中等，建议增加数据量以提升分析可信度"
+    },
+    "exploratory": {
+      "title": "小样本探索",
+      "message": "数据规模较小，仅供探索性参考，强烈建议扩大样本量"
+    },
+    "stats": {
+      "totalData": "数据总量",
+      "clusterCount": "聚类数",
+      "avgClusterSize": "平均聚类大小"
+    },
+    "suggestion": "建议",
+    "exploratoryHint": "当前数据量较少，建议使用更相关的关键词或增加抓取数量",
+    "preliminaryHint": "增加数据量至200+条以获得更稳定的聚类结果",
+    "dataCount": "{count} 条数据"
+  },
+  "export": {
+    "title": "Export",
+    "downloadCSV": "Download CSV",
+    "filename": "痛点分析结果",
+    "paidInterest": {
+      "high": "高",
+      "medium": "中",
+      "low": "低"
+    },
+    "headers": {
+      "clusterId": "簇ID",
+      "clusterSize": "簇大小",
+      "paidInterest": "付费意向",
+      "corePain": "核心痛点",
+      "rationale": "分析理由",
+      "productIdea": "产品构想",
+      "representativeTexts": "代表性原文"
+    }
+  },
+  "rawDataExport": {
+    "title": "Raw Data",
+    "csvFormat": "CSV Format",
+    "jsonFormat": "JSON Format",
+    "clusteringAnalysis": "Clustering Analysis",
+    "exportVideosCSV": "Export Videos CSV",
+    "exportCommentsCSV": "Export Comments CSV",
+    "exportAllJSON": "Export All Data JSON",
+    "exportClusterCSV": "Export Cluster Data CSV",
+    "clusterDataUnavailable": "聚类数据不可用",
+    "filenames": {
+      "videos": "视频数据",
+      "comments": "评论数据",
+      "clusters": "聚类数据",
+      "allData": "全部原始数据"
+    },
+    "videoHeaders": {
+      "title": "标题",
+      "author": "作者",
+      "videoUrl": "视频链接",
+      "publishTime": "发布时间",
+      "likes": "点赞数",
+      "commentCount": "评论数",
+      "description": "描述",
+      "collectedAt": "采集时间"
+    },
+    "commentHeaders": {
+      "videoTitle": "视频标题",
+      "commentText": "评论内容",
+      "username": "用户名",
+      "likes": "点赞数"
+    },
+    "clusterHeaders": {
+      "clusterId": "簇ID",
+      "clusterSize": "簇大小",
+      "dataType": "数据类型",
+      "content": "内容",
+      "usernameOrAuthor": "用户名/作者",
+      "likes": "点赞数",
+      "relatedVideo": "关联视频"
+    },
+    "dataTypes": {
+      "video": "视频",
+      "comment": "评论"
+    }
+  },
+  "jobStatus": {
+    "failed": "分析失败",
+    "completed": "分析完成",
+    "checkResults": "请查看右侧结果"
+  },
+  "errors": {
+    "jobIdRequired": "任务ID是必需的",
+    "jobNotFound": "任务不存在",
+    "serverError": "服务器内部错误",
+    "keywordsRequired": "关键词是必需的",
+    "noValidJobId": "未收到有效的任务ID",
+    "networkError": "网络错误，请重试"
+  }
+}

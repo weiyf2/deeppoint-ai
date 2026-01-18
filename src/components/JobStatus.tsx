@@ -1,3 +1,7 @@
+"use client";
+
+import { useTranslations } from 'next-intl';
+
 interface JobStatusProps {
   status: string;
   progressText: string;
@@ -5,6 +9,8 @@ interface JobStatusProps {
 }
 
 export default function JobStatus({ status, progressText, error }: JobStatusProps) {
+  const t = useTranslations('jobStatus');
+
   const getProgressBarWidth = () => {
     const progressSteps = [
       "正在抓取数据...",
@@ -33,7 +39,7 @@ export default function JobStatus({ status, progressText, error }: JobStatusProp
             </svg>
           </div>
           <div>
-            <span className="text-sm font-semibold text-red-800">分析失败</span>
+            <span className="text-sm font-semibold text-red-800">{t('failed')}</span>
             <p className="text-xs text-red-600 mt-0.5">{error}</p>
           </div>
         </div>
@@ -51,8 +57,8 @@ export default function JobStatus({ status, progressText, error }: JobStatusProp
             </svg>
           </div>
           <div>
-            <span className="text-sm font-semibold text-amber-800">分析完成</span>
-            <p className="text-xs text-amber-600 mt-0.5">请查看右侧结果</p>
+            <span className="text-sm font-semibold text-amber-800">{t('completed')}</span>
+            <p className="text-xs text-amber-600 mt-0.5">{t('checkResults')}</p>
           </div>
         </div>
       </div>
