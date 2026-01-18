@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from 'next-intl';
 import {
   X,
   Lightbulb,
@@ -170,12 +171,16 @@ function StarRating({ value, max = 5 }: { value: number; max?: number }) {
 }
 
 // 情绪强度卡片组件（视觉加强版）
-function EmotionIntensityCard({ value }: { value: number }) {
+function EmotionIntensityCard({ value, label, statusTexts }: {
+  value: number;
+  label: string;
+  statusTexts: { strong: string; moderate: string; weak: string };
+}) {
   // 根据分数确定状态文案
   const getStatusText = (score: number) => {
-    if (score >= 4) return 'STRONG INTENT';
-    if (score >= 3) return 'MODERATE';
-    return 'WEAK';
+    if (score >= 4) return statusTexts.strong;
+    if (score >= 3) return statusTexts.moderate;
+    return statusTexts.weak;
   };
 
   return (
@@ -193,7 +198,7 @@ function EmotionIntensityCard({ value }: { value: number }) {
         <svg className="w-5 h-5 text-amber-500" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2c0-3.32-2.67-7.25-8-11.8z" />
         </svg>
-        <span className="text-sm font-bold text-neutral-900">情绪强度</span>
+        <span className="text-sm font-bold text-neutral-900">{label}</span>
       </div>
 
       {/* 内容主体：左右布局，flex-1 填充剩余空间，items-end 贴底 */}
@@ -234,7 +239,16 @@ function EmotionIntensityCard({ value }: { value: number }) {
 }
 
 export default function DetailModal({ isOpen, onClose, result }: DetailModalProps) {
+  const t = useTranslations('detail');
   const [activeTab, setActiveTab] = useState<TabId>('pain');
+
+  // 使用翻译的 tabs
+  const translatedTabs = [
+    { id: 'pain' as const, label: t('tabs.pain'), icon: Lightbulb },
+    { id: 'market' as const, label: t('tabs.market'), icon: Store },
+    { id: 'mvp' as const, label: t('tabs.mvp'), icon: Rocket },
+    { id: 'source' as const, label: t('tabs.source'), icon: FileText },
+  ];
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -322,15 +336,15 @@ export default function DetailModal({ isOpen, onClose, result }: DetailModalProp
           <div className="px-5 py-5 border-b border-neutral-100 bg-gradient-to-r from-amber-50/50 to-transparent">
             {/* 三个环形图 - 放大版 */}
             <div className="flex items-start justify-center gap-10 mb-5">
-              <RingGauge value={result.priority_score.demand_intensity} label="需求强度" size={90} strokeWidth={7} />
-              <RingGauge value={result.priority_score.market_size} label="市场规模" size={90} strokeWidth={7} />
+              <RingGauge value={result.priority_score.demand_intensity} label={t('priority.demandIntensity')} size={90} strokeWidth={7} />
+              <RingGauge value={result.priority_score.market_size} label={t('priority.marketSize')} size={90} strokeWidth={7} />
               <RingGauge
                 value={result.priority_score.competition}
-                label="竞争程度"
+                label={t('priority.competition')}
                 size={90}
                 strokeWidth={7}
                 topBadge={competitionInfo ? {
-                  text: competitionInfo.text,
+                  text: competitionInfo.text === '蓝海' ? t('priority.blueOcean') : competitionInfo.text === '红海' ? t('priority.redOcean') : t('priority.moderate'),
                   color: competitionInfo.text === '蓝海' ? 'bg-blue-100 text-blue-600' : competitionInfo.text === '红海' ? 'bg-red-100 text-red-500' : 'bg-amber-100 text-amber-600'
                 } : undefined}
               />
@@ -339,7 +353,7 @@ export default function DetailModal({ isOpen, onClose, result }: DetailModalProp
             {/* 综合推荐指数 - 横向进度条 */}
             <div className="bg-neutral-100 rounded-lg px-4 py-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-neutral-600">综合推荐指数</span>
+                <span className="text-sm font-medium text-neutral-600">{t('priority.overallIndex')}</span>
                 <span className={`text-lg font-bold ${getScoreColor(result.priority_score.overall)}`}>
                   {result.priority_score.overall.toFixed(1)} <span className="text-sm text-neutral-400 font-normal">/ 5</span>
                 </span>
@@ -356,7 +370,7 @@ export default function DetailModal({ isOpen, onClose, result }: DetailModalProp
 
         {/* Tab 导航 */}
         <div className="flex border-b border-neutral-200 px-5">
-          {tabs.map((tab) => {
+          {translatedTabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
@@ -387,7 +401,7 @@ export default function DetailModal({ isOpen, onClose, result }: DetailModalProp
                   <div className="bg-white rounded-xl p-4 border border-neutral-200">
                     <div className="flex items-center gap-2 mb-3">
                       <Target className="w-4 h-4 text-amber-600" />
-                      <h3 className="text-sm font-semibold text-neutral-700">表面痛点</h3>
+                      <h3 className="text-sm font-semibold text-neutral-700">{t('painAnalysis.surfacePain')}</h3>
                     </div>
                     <p className="text-sm text-neutral-600 leading-relaxed">
                       {result.analysis.pain_depth.surface_pain}
@@ -398,7 +412,7 @@ export default function DetailModal({ isOpen, onClose, result }: DetailModalProp
                   <div className="bg-white rounded-xl p-4 border border-neutral-200">
                     <div className="flex items-center gap-2 mb-3">
                       <TrendingUp className="w-4 h-4 text-amber-600" />
-                      <h3 className="text-sm font-semibold text-neutral-700">根因分析（3个"为什么"）</h3>
+                      <h3 className="text-sm font-semibold text-neutral-700">{t('painAnalysis.rootCauses')}</h3>
                     </div>
                     <div className="space-y-3">
                       {result.analysis.pain_depth.root_causes.map((cause, index) => (
@@ -417,7 +431,7 @@ export default function DetailModal({ isOpen, onClose, result }: DetailModalProp
                     <div className="bg-white rounded-xl p-4 border border-neutral-200">
                       <div className="flex items-center gap-2 mb-3">
                         <Users className="w-4 h-4 text-amber-600" />
-                        <h3 className="text-sm font-semibold text-neutral-700">用户场景</h3>
+                        <h3 className="text-sm font-semibold text-neutral-700">{t('painAnalysis.userScenarios')}</h3>
                       </div>
                       <ul className="space-y-2">
                         {result.analysis.pain_depth.user_scenarios.map((scenario, index) => (
@@ -430,13 +444,21 @@ export default function DetailModal({ isOpen, onClose, result }: DetailModalProp
                     </div>
 
                     {/* 情绪强度 - 视觉加强版 */}
-                    <EmotionIntensityCard value={result.analysis.pain_depth.emotional_intensity} />
+                    <EmotionIntensityCard
+                      value={result.analysis.pain_depth.emotional_intensity}
+                      label={t('painAnalysis.emotionalIntensity')}
+                      statusTexts={{
+                        strong: t('painAnalysis.strongIntent'),
+                        moderate: t('painAnalysis.moderate'),
+                        weak: t('painAnalysis.weak')
+                      }}
+                    />
                   </div>
                 </>
               ) : (
                 <div className="text-center py-8 text-neutral-400">
                   <Lightbulb className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>暂无痛点深度分析数据</p>
+                  <p>{t('painAnalysis.noData')}</p>
                 </div>
               )}
             </div>
@@ -451,7 +473,7 @@ export default function DetailModal({ isOpen, onClose, result }: DetailModalProp
                   <div className="bg-white rounded-xl p-4 border border-neutral-200">
                     <div className="flex items-center gap-2 mb-3">
                       <Shield className="w-4 h-4 text-amber-600" />
-                      <h3 className="text-sm font-semibold text-neutral-700">现有解决方案</h3>
+                      <h3 className="text-sm font-semibold text-neutral-700">{t('marketLandscape.existingSolutions')}</h3>
                     </div>
                     <div className="space-y-3">
                       {result.analysis.market_landscape.existing_solutions.map((solution, index) => (
@@ -459,7 +481,7 @@ export default function DetailModal({ isOpen, onClose, result }: DetailModalProp
                           <div className="text-sm font-semibold text-neutral-700">{solution.name}</div>
                           <div className="text-xs text-amber-600 mt-1 flex items-center gap-1">
                             <AlertTriangle className="w-3 h-3" />
-                            局限: {solution.limitation}
+                            {t('marketLandscape.limitation')}: {solution.limitation}
                           </div>
                         </div>
                       ))}
@@ -470,7 +492,7 @@ export default function DetailModal({ isOpen, onClose, result }: DetailModalProp
                   <div className="bg-white rounded-xl p-4 border border-neutral-200">
                     <div className="flex items-center gap-2 mb-3">
                       <Target className="w-4 h-4 text-amber-600" />
-                      <h3 className="text-sm font-semibold text-neutral-700">未满足的需求</h3>
+                      <h3 className="text-sm font-semibold text-neutral-700">{t('marketLandscape.unmetNeeds')}</h3>
                     </div>
                     <ul className="space-y-2">
                       {result.analysis.market_landscape.unmet_needs.map((need, index) => (
@@ -486,7 +508,7 @@ export default function DetailModal({ isOpen, onClose, result }: DetailModalProp
                   <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
                     <div className="flex items-center gap-2 mb-3">
                       <Rocket className="w-4 h-4 text-amber-600" />
-                      <h3 className="text-sm font-semibold text-amber-800">市场机会</h3>
+                      <h3 className="text-sm font-semibold text-amber-800">{t('marketLandscape.marketOpportunity')}</h3>
                     </div>
                     <p className="text-sm text-amber-700 font-medium leading-relaxed">
                       {result.analysis.market_landscape.opportunity}
@@ -496,7 +518,7 @@ export default function DetailModal({ isOpen, onClose, result }: DetailModalProp
               ) : (
                 <div className="text-center py-8 text-neutral-400">
                   <Store className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>暂无市场格局分析数据</p>
+                  <p>{t('marketLandscape.noData')}</p>
                 </div>
               )}
             </div>
@@ -509,7 +531,7 @@ export default function DetailModal({ isOpen, onClose, result }: DetailModalProp
               <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
                 <div className="flex items-center gap-2 mb-3">
                   <Rocket className="w-4 h-4 text-amber-600" />
-                  <h3 className="text-sm font-semibold text-amber-800">AI 产品构想</h3>
+                  <h3 className="text-sm font-semibold text-amber-800">{t('mvpPlan.aiProductIdea')}</h3>
                 </div>
                 <p className="text-base text-amber-900 font-medium">
                   {result.analysis.potential_product}
@@ -522,7 +544,7 @@ export default function DetailModal({ isOpen, onClose, result }: DetailModalProp
                   <div className="bg-white rounded-xl p-4 border border-neutral-200">
                     <div className="flex items-center gap-2 mb-3">
                       <CheckCircle className="w-4 h-4 text-amber-600" />
-                      <h3 className="text-sm font-semibold text-neutral-700">核心功能</h3>
+                      <h3 className="text-sm font-semibold text-neutral-700">{t('mvpPlan.coreFeatures')}</h3>
                     </div>
                     <ul className="space-y-2">
                       {result.analysis.mvp_plan.core_features.map((feature, index) => (
@@ -538,14 +560,14 @@ export default function DetailModal({ isOpen, onClose, result }: DetailModalProp
                   <div className="bg-white rounded-xl p-4 border border-neutral-200">
                     <div className="flex items-center gap-2 mb-3">
                       <Target className="w-4 h-4 text-amber-600" />
-                      <h3 className="text-sm font-semibold text-neutral-700">验证假设</h3>
+                      <h3 className="text-sm font-semibold text-neutral-700">{t('mvpPlan.validationHypotheses')}</h3>
                     </div>
                     <div className="space-y-3">
                       {result.analysis.mvp_plan.validation_hypotheses.map((item, index) => (
                         <div key={index} className="border-l-2 border-amber-300 pl-4">
-                          <div className="text-xs text-neutral-500 font-medium">假设 {index + 1}</div>
+                          <div className="text-xs text-neutral-500 font-medium">{t('mvpPlan.hypothesis')} {index + 1}</div>
                           <div className="text-sm text-neutral-700 mt-1">{item.hypothesis}</div>
-                          <div className="text-xs text-amber-600 mt-1">→ 测试方法: {item.test_method}</div>
+                          <div className="text-xs text-amber-600 mt-1">→ {t('mvpPlan.testMethod')}: {item.test_method}</div>
                         </div>
                       ))}
                     </div>
@@ -556,21 +578,21 @@ export default function DetailModal({ isOpen, onClose, result }: DetailModalProp
                     <div className="bg-white rounded-xl p-4 border border-neutral-200">
                       <div className="flex items-center gap-2 mb-2">
                         <Users className="w-4 h-4 text-amber-600" />
-                        <h3 className="text-xs font-semibold text-neutral-500">首批用户</h3>
+                        <h3 className="text-xs font-semibold text-neutral-500">{t('mvpPlan.firstUsers')}</h3>
                       </div>
                       <p className="text-sm text-neutral-700">{result.analysis.mvp_plan.first_users}</p>
                     </div>
                     <div className="bg-white rounded-xl p-4 border border-neutral-200">
                       <div className="flex items-center gap-2 mb-2">
                         <Clock className="w-4 h-4 text-amber-600" />
-                        <h3 className="text-xs font-semibold text-neutral-500">时间预估</h3>
+                        <h3 className="text-xs font-semibold text-neutral-500">{t('mvpPlan.timeline')}</h3>
                       </div>
                       <p className="text-sm text-neutral-700">{result.analysis.mvp_plan.timeline}</p>
                     </div>
                     <div className="bg-white rounded-xl p-4 border border-neutral-200">
                       <div className="flex items-center gap-2 mb-2">
                         <DollarSign className="w-4 h-4 text-amber-600" />
-                        <h3 className="text-xs font-semibold text-neutral-500">成本预估</h3>
+                        <h3 className="text-xs font-semibold text-neutral-500">{t('mvpPlan.estimatedCost')}</h3>
                       </div>
                       <p className="text-sm text-neutral-700">{result.analysis.mvp_plan.estimated_cost}</p>
                     </div>
@@ -579,7 +601,7 @@ export default function DetailModal({ isOpen, onClose, result }: DetailModalProp
               ) : (
                 <div className="text-center py-8 text-neutral-400">
                   <Rocket className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>暂无MVP方案数据</p>
+                  <p>{t('mvpPlan.noData')}</p>
                 </div>
               )}
             </div>
@@ -592,7 +614,7 @@ export default function DetailModal({ isOpen, onClose, result }: DetailModalProp
               <div className="bg-white rounded-xl p-4 border border-neutral-200">
                 <div className="flex items-center gap-2 mb-3">
                   <FileText className="w-4 h-4 text-amber-600" />
-                  <h3 className="text-sm font-semibold text-neutral-700">分析依据</h3>
+                  <h3 className="text-sm font-semibold text-neutral-700">{t('sourceData.analysisRationale')}</h3>
                 </div>
                 <p className="text-sm text-neutral-600 leading-relaxed">
                   {result.analysis.rationale}
@@ -602,16 +624,16 @@ export default function DetailModal({ isOpen, onClose, result }: DetailModalProp
               {/* 统计信息 */}
               <div className="grid grid-cols-3 gap-3">
                 <div className="bg-white rounded-xl p-4 border border-neutral-200 text-center">
-                  <div className="text-xs text-neutral-500 mb-1">样本数量</div>
+                  <div className="text-xs text-neutral-500 mb-1">{t('sourceData.sampleCount')}</div>
                   <div className="text-2xl font-bold text-neutral-900">{result.size}</div>
                 </div>
                 <div className="bg-white rounded-xl p-4 border border-neutral-200 text-center">
-                  <div className="text-xs text-neutral-500 mb-1">原文数量</div>
+                  <div className="text-xs text-neutral-500 mb-1">{t('sourceData.sourceCount')}</div>
                   <div className="text-2xl font-bold text-neutral-900">{result.representative_texts.length}</div>
                 </div>
                 {result.analysis.keyword_relevance !== undefined && (
                   <div className="bg-white rounded-xl p-4 border border-neutral-200 text-center">
-                    <div className="text-xs text-neutral-500 mb-1">相关度</div>
+                    <div className="text-xs text-neutral-500 mb-1">{t('sourceData.relevance')}</div>
                     <div className="text-2xl font-bold text-amber-600">{result.analysis.keyword_relevance}%</div>
                   </div>
                 )}
@@ -619,7 +641,7 @@ export default function DetailModal({ isOpen, onClose, result }: DetailModalProp
 
               {/* 代表性原文 */}
               <div className="bg-white rounded-xl p-4 border border-neutral-200">
-                <h3 className="text-sm font-semibold text-neutral-700 mb-4">代表性原文</h3>
+                <h3 className="text-sm font-semibold text-neutral-700 mb-4">{t('sourceData.representativeTexts')}</h3>
                 <div className="space-y-3">
                   {result.representative_texts.map((text, index) => (
                     <div
@@ -644,7 +666,7 @@ export default function DetailModal({ isOpen, onClose, result }: DetailModalProp
             onClick={onClose}
             className="px-5 py-2 text-sm font-semibold text-neutral-600 hover:bg-neutral-50 rounded-lg transition"
           >
-            关闭
+            {t('close')}
           </button>
         </div>
       </div>

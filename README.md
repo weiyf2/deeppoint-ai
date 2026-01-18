@@ -1,3 +1,5 @@
+[English](./README.EN.md) | 中文
+
 # DeepPoint - 用户痛点发现器
 
 ![logo](./assets/logo.png)
@@ -24,6 +26,12 @@
 - AI 产品经理角色自动生成产品方案
 - 包含核心功能、技术栈、开发路线图
 - 评估实现难度和市场潜力
+
+### 多语言支持
+- 支持中文/英文界面切换
+- AI 分析结果根据当前语言自动输出对应语言
+- URL 路由国际化（`/zh/`、`/en/`）
+- 自动检测浏览器语言偏好
 
 ## 数据源说明
 
@@ -120,15 +128,24 @@ npm run start
 2. AI 将分析用户反馈，生成完整产品方案
 3. 查看产品名称、功能、技术栈、开发计划等
 
+### 语言切换
+
+- 页面右上角点击语言切换器可切换中文/英文
+- 首次访问会自动检测浏览器语言偏好
+- AI 分析结果会根据当前语言自动输出对应语言
+- 也可通过 URL 直接访问：`/zh/` 或 `/en/`
+
 ## 项目结构
 
 ```
 deeppoint-ai/
 ├── src/
 │   ├── app/
-│   │   ├── page.tsx              # 主页 - 痛点分析
-│   │   ├── ai-product/page.tsx   # AI产品建议页
-│   │   ├── layout.tsx            # 全局布局
+│   │   ├── [locale]/             # 国际化动态路由
+│   │   │   ├── page.tsx          # 主页 - 痛点分析
+│   │   │   ├── ai-product/page.tsx # AI产品建议页
+│   │   │   └── layout.tsx        # 国际化布局（NextIntlClientProvider）
+│   │   ├── layout.tsx            # 根布局
 │   │   └── api/
 │   │       ├── analyze/          # 创建分析任务
 │   │       ├── jobs/[jobId]/     # 查询任务状态
@@ -145,7 +162,16 @@ deeppoint-ai/
 │   │   ├── AIProductCard.tsx     # AI产品卡片
 │   │   ├── AIProductDetailModal.tsx
 │   │   ├── ExportButton.tsx      # CSV导出
-│   │   └── RawDataExportButton.tsx # 原始数据导出
+│   │   ├── RawDataExportButton.tsx # 原始数据导出
+│   │   └── LanguageSwitcher.tsx  # 语言切换器
+│   ├── i18n/                     # 国际化配置
+│   │   ├── config.ts             # 语言配置（支持的语言列表）
+│   │   ├── navigation.ts         # 国际化导航工具
+│   │   └── request.ts            # 翻译消息加载
+│   ├── messages/                 # 翻译文件
+│   │   ├── zh.json               # 中文翻译
+│   │   └── en.json               # 英文翻译
+│   ├── middleware.ts             # 国际化路由中间件
 │   └── lib/
 │       └── design-tokens.ts      # 设计系统标记
 ├── lib/
@@ -179,6 +205,7 @@ deeppoint-ai/
 |------|------|
 | 前端框架 | Next.js 15 + React 19 |
 | 样式 | Tailwind CSS 4 |
+| 国际化 | next-intl |
 | 数据请求 | SWR (轮询任务状态) |
 | 后端 | Next.js API Routes |
 | 数据采集 | Python + DrissionPage / Playwright |
@@ -213,6 +240,7 @@ A: 暂不建议使用，测试发现会导致账号被封禁。
 - [x] 痛点聚类分析
 - [x] AI 产品方案生成
 - [x] 深度抓取（含评论）
+- [x] 多语言支持（中文/英文）
 - [ ] 更多数据源（知乎、微博）
 - [ ] 历史记录保存
 

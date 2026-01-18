@@ -3,6 +3,7 @@
 import { useState } from "react";
 import useSWR from "swr";
 import Link from "next/link";
+import { useTranslations, useLocale } from 'next-intl';
 import AnalysisForm, { DouyinNewConfig } from "@/components/AnalysisForm";
 import LoadingAnimation from "@/components/LoadingAnimation";
 import ResultsTable from "@/components/ResultsTable";
@@ -10,6 +11,7 @@ import DetailModal from "@/components/DetailModal";
 import ExportButton from "@/components/ExportButton";
 import RawDataExportButton from "@/components/RawDataExportButton";
 import DataQualityBanner from "@/components/DataQualityBanner";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 // ClusterResult 类型定义
 interface ClusterResult {
@@ -112,6 +114,13 @@ interface JobResponse {
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function Home() {
+  const t = useTranslations('home');
+  const tNav = useTranslations('nav');
+  const tErrors = useTranslations('errors');
+  const tLoading = useTranslations('loading');
+  const tStats = useTranslations('home.stats');
+  const locale = useLocale();
+
   const [jobId, setJobId] = useState<string | null>(null);
   const [results, setResults] = useState<ClusterResult[]>([]);
   const [rawData, setRawData] = useState<RawData | undefined>(undefined);
@@ -177,7 +186,8 @@ export default function Home() {
           dataSource,
           deepCrawl,
           maxVideos,
-          douyinNewConfig  // 新版抖音配置
+          douyinNewConfig,  // 新版抖音配置
+          locale  // 输出语言
         }),
       });
 
@@ -190,7 +200,7 @@ export default function Home() {
       if (data.jobId) {
         setJobId(data.jobId);
       } else {
-        throw new Error('未收到有效的任务ID');
+        throw new Error(tErrors('noValidJobId'));
       }
     } catch {
       setIsLoading(false);
@@ -226,17 +236,20 @@ export default function Home() {
         </div>
         <div className="hidden sm:flex gap-6 text-sm font-medium text-gray-500">
           <Link href="/" className="text-[#18181B] hover:text-amber-600 transition">
-            Dashboard
+            {tNav('dashboard')}
           </Link>
           <Link href="/ai-product" className="hover:text-[#18181B] transition">
-            AI Product
+            {tNav('aiProduct')}
           </Link>
         </div>
-        <button className="w-8 h-8 rounded-full bg-[#E5E4DE] flex items-center justify-center hover:bg-[#F3F2EE] transition">
-          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-          </svg>
-        </button>
+        <div className="flex items-center gap-3">
+          <LanguageSwitcher />
+          <button className="w-8 h-8 rounded-full bg-[#E5E4DE] flex items-center justify-center hover:bg-[#F3F2EE] transition">
+            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </button>
+        </div>
       </nav>
 
       {/* 主容器 */}
@@ -247,8 +260,8 @@ export default function Home() {
             {/* 装饰性光晕 */}
             <div className="absolute top-0 right-0 w-20 h-20 bg-amber-400 opacity-10 blur-3xl rounded-full"></div>
 
-            <h1 className="text-2xl font-bold text-[#18181B] mb-1">开始探索</h1>
-            <p className="text-xs text-gray-500 mb-6 uppercase tracking-wider">Define your target</p>
+            <h1 className="text-2xl font-bold text-[#18181B] mb-1">{t('title')}</h1>
+            <p className="text-xs text-gray-500 mb-6 uppercase tracking-wider">{t('subtitle')}</p>
 
             <AnalysisForm
               onSubmit={handleAnalysisSubmit}
@@ -263,7 +276,7 @@ export default function Home() {
           {isLoading && (
             <div className="h-full min-h-[500px] bg-white/70 backdrop-blur-sm border border-amber-100 rounded-3xl shadow-neuro overflow-hidden fade-in">
               <LoadingAnimation
-                progressText={jobData?.progress || "正在初始化..."}
+                progressText={jobData?.progress || tLoading('initializing')}
                 status={jobData?.status || "processing"}
               />
             </div>
@@ -277,8 +290,8 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
               </div>
-              <h3 className="text-lg font-bold text-gray-400">等待输入</h3>
-              <p className="text-gray-400 text-sm mt-1">在左侧设置参数以生成用户痛点报告</p>
+              <h3 className="text-lg font-bold text-gray-400">{t('emptyState.title')}</h3>
+              <p className="text-gray-400 text-sm mt-1">{t('emptyState.description')}</p>
             </div>
           )}
 
@@ -288,11 +301,11 @@ export default function Home() {
               {/* Header Stats */}
               <div className="grid grid-cols-4 gap-4 mb-2">
                 <div className="bg-white rounded-2xl p-4 shadow-neuro">
-                  <div className="text-gray-400 text-xs font-semibold uppercase">Total Signals</div>
+                  <div className="text-gray-400 text-xs font-semibold uppercase">{tStats('totalSignals')}</div>
                   <div className="text-2xl font-bold text-[#18181B] mt-1">{totalSignals}</div>
                 </div>
                 <div className="bg-white rounded-2xl p-4 shadow-neuro">
-                  <div className="text-gray-400 text-xs font-semibold uppercase">Pain Points</div>
+                  <div className="text-gray-400 text-xs font-semibold uppercase">{tStats('painPoints')}</div>
                   <div className="text-2xl font-bold text-[#18181B] mt-1">{results.length}</div>
                 </div>
                 <ExportButton results={results} />

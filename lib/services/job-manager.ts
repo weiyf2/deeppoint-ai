@@ -44,6 +44,7 @@ export interface Job {
   deepCrawl: boolean;  // 是否深度抓取（含评论）
   maxVideos?: number;  // 深度抓取时的最大视频数
   douyinNewOptions?: DouyinNewCrawlOptions;  // 新版抖音完整配置
+  locale: string;  // 输出语言
   startTime: number;
   results?: ClusterResult[];
   crawlStats?: {       // 抓取统计
@@ -96,7 +97,8 @@ export class JobManager {
     dataSource: DataSourceType = 'xiaohongshu',
     deepCrawl: boolean = false,
     maxVideos: number = 10,
-    douyinNewOptions?: DouyinNewCrawlOptions
+    douyinNewOptions?: DouyinNewCrawlOptions,
+    locale: string = 'zh'
   ): string {
     const jobId = uuidv4();
     const job: Job = {
@@ -109,6 +111,7 @@ export class JobManager {
       deepCrawl,
       maxVideos,
       douyinNewOptions,
+      locale,
       startTime: Date.now()
     };
 
@@ -372,11 +375,12 @@ export class JobManager {
         const representativeTexts = this.clusteringService.getRepresentativeTexts(cluster, 8);
 
         try {
-          // 调用GLM分析聚类（传递关键词和数据规模）
+          // 调用GLM分析聚类（传递关键词、数据规模和语言）
           const analysis = await this.glmService.analyzeCluster(
             representativeTexts,
             job.keywords,
-            allRawTexts.length
+            allRawTexts.length,
+            job.locale
           );
 
           // 计算优先级分数

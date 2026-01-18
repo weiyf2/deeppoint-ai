@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface RawVideoData {
   title: string;
@@ -43,6 +44,7 @@ type ExportFormat = 'csv' | 'json';
 type ExportType = 'videos' | 'comments' | 'all' | 'clusters';
 
 export default function RawDataExportButton({ rawData, clusteredData, keywords }: RawDataExportButtonProps) {
+  const t = useTranslations('rawDataExport');
   const [showDropdown, setShowDropdown] = useState(false);
 
   if (!rawData || (rawData.videos.length === 0 && rawData.comments.length === 0)) {
@@ -77,7 +79,16 @@ export default function RawDataExportButton({ rawData, clusteredData, keywords }
   };
 
   const exportVideosCSV = () => {
-    const headers = ['标题', '作者', '视频链接', '发布时间', '点赞数', '评论数', '描述', '采集时间'];
+    const headers = [
+      t('videoHeaders.title'),
+      t('videoHeaders.author'),
+      t('videoHeaders.videoUrl'),
+      t('videoHeaders.publishTime'),
+      t('videoHeaders.likes'),
+      t('videoHeaders.commentCount'),
+      t('videoHeaders.description'),
+      t('videoHeaders.collectedAt')
+    ];
     const rows = [headers.join(',')];
 
     for (const video of rawData.videos) {
@@ -95,11 +106,16 @@ export default function RawDataExportButton({ rawData, clusteredData, keywords }
     }
 
     const keywordStr = keywords.join('_').slice(0, 20);
-    downloadFile(rows.join('\n'), `视频数据_${keywordStr}_${getTimestamp()}.csv`, 'text/csv;charset=utf-8;');
+    downloadFile(rows.join('\n'), `${t('filenames.videos')}_${keywordStr}_${getTimestamp()}.csv`, 'text/csv;charset=utf-8;');
   };
 
   const exportCommentsCSV = () => {
-    const headers = ['视频标题', '评论内容', '用户名', '点赞数'];
+    const headers = [
+      t('commentHeaders.videoTitle'),
+      t('commentHeaders.commentText'),
+      t('commentHeaders.username'),
+      t('commentHeaders.likes')
+    ];
     const rows = [headers.join(',')];
 
     for (const comment of rawData.comments) {
@@ -113,7 +129,7 @@ export default function RawDataExportButton({ rawData, clusteredData, keywords }
     }
 
     const keywordStr = keywords.join('_').slice(0, 20);
-    downloadFile(rows.join('\n'), `评论数据_${keywordStr}_${getTimestamp()}.csv`, 'text/csv;charset=utf-8;');
+    downloadFile(rows.join('\n'), `${t('filenames.comments')}_${keywordStr}_${getTimestamp()}.csv`, 'text/csv;charset=utf-8;');
   };
 
   const exportJSON = (type: ExportType) => {
@@ -126,15 +142,15 @@ export default function RawDataExportButton({ rawData, clusteredData, keywords }
     switch (type) {
       case 'videos':
         data = { keywords, videos: rawData.videos, exportedAt: new Date().toISOString() };
-        filename = `视频数据_${keywordStr}_${timestamp}.json`;
+        filename = `${t('filenames.videos')}_${keywordStr}_${timestamp}.json`;
         break;
       case 'comments':
         data = { keywords, comments: rawData.comments, exportedAt: new Date().toISOString() };
-        filename = `评论数据_${keywordStr}_${timestamp}.json`;
+        filename = `${t('filenames.comments')}_${keywordStr}_${timestamp}.json`;
         break;
       case 'clusters':
         if (!clusteredData) {
-          alert('聚类数据不可用');
+          alert(t('clusterDataUnavailable'));
           return;
         }
         data = {
@@ -147,7 +163,7 @@ export default function RawDataExportButton({ rawData, clusteredData, keywords }
           },
           exportedAt: new Date().toISOString()
         };
-        filename = `聚类数据_${keywordStr}_${timestamp}.json`;
+        filename = `${t('filenames.clusters')}_${keywordStr}_${timestamp}.json`;
         break;
       case 'all':
       default:
@@ -163,7 +179,7 @@ export default function RawDataExportButton({ rawData, clusteredData, keywords }
           },
           exportedAt: new Date().toISOString()
         };
-        filename = `全部原始数据_${keywordStr}_${timestamp}.json`;
+        filename = `${t('filenames.allData')}_${keywordStr}_${timestamp}.json`;
     }
 
     downloadFile(JSON.stringify(data, null, 2), filename, 'application/json;charset=utf-8;');
@@ -171,12 +187,21 @@ export default function RawDataExportButton({ rawData, clusteredData, keywords }
 
   const exportClustersCSV = () => {
     if (!clusteredData) {
-      alert('聚类数据不可用');
+      alert(t('clusterDataUnavailable'));
       return;
     }
 
     const rows: string[] = [];
-    rows.push('簇ID,簇大小,数据类型,内容,用户名/作者,点赞数,关联视频');
+    const headers = [
+      t('clusterHeaders.clusterId'),
+      t('clusterHeaders.clusterSize'),
+      t('clusterHeaders.dataType'),
+      t('clusterHeaders.content'),
+      t('clusterHeaders.usernameOrAuthor'),
+      t('clusterHeaders.likes'),
+      t('clusterHeaders.relatedVideo')
+    ];
+    rows.push(headers.join(','));
 
     for (const cluster of clusteredData) {
       // 导出视频
@@ -184,7 +209,7 @@ export default function RawDataExportButton({ rawData, clusteredData, keywords }
         const row = [
           cluster.clusterId.toString(),
           cluster.size.toString(),
-          '视频',
+          t('dataTypes.video'),
           escapeCSVField(video.title),
           escapeCSVField(video.author),
           escapeCSVField(video.likes),
@@ -198,7 +223,7 @@ export default function RawDataExportButton({ rawData, clusteredData, keywords }
         const row = [
           cluster.clusterId.toString(),
           cluster.size.toString(),
-          '评论',
+          t('dataTypes.comment'),
           escapeCSVField(comment.comment_text),
           escapeCSVField(comment.username),
           escapeCSVField(comment.likes),
@@ -209,7 +234,7 @@ export default function RawDataExportButton({ rawData, clusteredData, keywords }
     }
 
     const keywordStr = keywords.join('_').slice(0, 20);
-    downloadFile(rows.join('\n'), `聚类数据_${keywordStr}_${getTimestamp()}.csv`, 'text/csv;charset=utf-8;');
+    downloadFile(rows.join('\n'), `${t('filenames.clusters')}_${keywordStr}_${getTimestamp()}.csv`, 'text/csv;charset=utf-8;');
   };
 
   const handleExport = (format: ExportFormat, type: ExportType) => {

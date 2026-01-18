@@ -1,3 +1,7 @@
+"use client";
+
+import { useTranslations } from 'next-intl';
+
 interface ClusterResult {
   id: string;
   size: number;
@@ -15,22 +19,24 @@ interface ExportButtonProps {
 }
 
 export default function ExportButton({ results }: ExportButtonProps) {
+  const t = useTranslations('export');
+
   const convertToCSV = (data: ClusterResult[]): string => {
     const headers = [
-      "簇ID",
-      "簇大小",
-      "付费意向",
-      "核心痛点",
-      "分析理由",
-      "产品构想",
-      "代表性原文"
+      t('headers.clusterId'),
+      t('headers.clusterSize'),
+      t('headers.paidInterest'),
+      t('headers.corePain'),
+      t('headers.rationale'),
+      t('headers.productIdea'),
+      t('headers.representativeTexts')
     ];
 
     const translatePaidInterest = (interest: "High" | "Medium" | "Low") => {
-      const mapping = {
-        High: "高",
-        Medium: "中",
-        Low: "低"
+      const mapping: Record<string, string> = {
+        High: t('paidInterest.high'),
+        Medium: t('paidInterest.medium'),
+        Low: t('paidInterest.low')
       };
       return mapping[interest];
     };
@@ -76,7 +82,7 @@ export default function ExportButton({ results }: ExportButtonProps) {
       link.setAttribute('href', url);
 
       const timestamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
-      link.setAttribute('download', `痛点分析结果_${timestamp}.csv`);
+      link.setAttribute('download', `${t('filename')}_${timestamp}.csv`);
 
       link.style.visibility = 'hidden';
       document.body.appendChild(link);

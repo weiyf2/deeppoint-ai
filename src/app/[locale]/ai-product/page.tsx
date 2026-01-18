@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import useSWR from "swr";
+import { useLocale } from 'next-intl';
 import AnalysisForm, { DataSourceType, DouyinNewConfig } from "@/components/AnalysisForm";
 import JobStatus from "@/components/JobStatus";
 import AIProductCard from "@/components/AIProductCard";
@@ -42,6 +43,7 @@ interface JobResponse {
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function AIProductPage() {
+  const locale = useLocale();
   const [jobId, setJobId] = useState<string | null>(null);
   const [results, setResults] = useState<AIProductResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -95,7 +97,8 @@ export default function AIProductPage() {
           dataSource,
           deepCrawl,
           maxVideos,
-          douyinNewConfig
+          douyinNewConfig,
+          locale  // 输出语言
         }),
       });
 

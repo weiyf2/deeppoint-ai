@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from 'next-intl';
 
 interface LoadingAnimationProps {
   progressText: string;
@@ -91,10 +92,50 @@ function getLogDetail(progressText: string): string {
 }
 
 export default function LoadingAnimation({ progressText, status }: LoadingAnimationProps) {
+  const t = useTranslations('loading');
   const [currentAnimation, setCurrentAnimation] = useState<AnimationType>("data-stream");
   const [isTransitioning, setIsTransitioning] = useState(false);
   const blobRef = useRef<SVGPathElement>(null);
   const animationRef = useRef<number | undefined>(undefined);
+
+  // 获取阶段信息（使用翻译）
+  const getStageInfoTranslated = (animationType: AnimationType) => {
+    switch (animationType) {
+      case "data-stream":
+        return { title: t('stages.dataStream.title'), badge: t('stages.dataStream.badge'), step: t('stages.dataStream.step') };
+      case "fluid":
+        return { title: t('stages.fluid.title'), badge: t('stages.fluid.badge'), step: t('stages.fluid.step') };
+      case "crystal":
+        return { title: t('stages.crystal.title'), badge: t('stages.crystal.badge'), step: t('stages.crystal.step') };
+      case "neural":
+        return { title: t('stages.neural.title'), badge: t('stages.neural.badge'), step: t('stages.neural.step') };
+    }
+  };
+
+  // 获取详细日志文本（使用翻译）
+  const getLogDetailTranslated = (progressText: string) => {
+    if (progressText.includes("初始化")) return t('logs.initializing');
+    if (progressText.includes("验证")) return t('logs.validating');
+    if (progressText.includes("抓取")) {
+      const match = progressText.match(/"([^"]+)"/);
+      return match ? t('logs.crawling', { keyword: match[1] }) : t('logs.crawlingDefault');
+    }
+    if (progressText.includes("语义聚类")) return t('logs.semanticAnalysis');
+    if (progressText.includes("条视频")) {
+      const match = progressText.match(/(\d+)/);
+      return match ? t('logs.processingVideos', { count: match[1] }) : t('logs.processingVideos', { count: '0' });
+    }
+    if (progressText.includes("条评论")) {
+      const match = progressText.match(/(\d+)/);
+      return match ? t('logs.processingComments', { count: match[1] }) : t('logs.processingComments', { count: '0' });
+    }
+    if (progressText.includes("LLM")) return t('logs.llmAnalysis');
+    if (progressText.includes("分析聚类")) {
+      const match = progressText.match(/(\d+)\/(\d+)/);
+      return match ? t('logs.analyzingCluster', { current: match[1] }) : t('logs.analyzingCluster', { current: '1' });
+    }
+    return t('logs.processing');
+  };
 
   useEffect(() => {
     const newAnimation = getAnimationType(progressText);
@@ -147,9 +188,9 @@ export default function LoadingAnimation({ progressText, status }: LoadingAnimat
     };
   }, [currentAnimation]);
 
-  const stageInfo = getStageInfo(currentAnimation);
+  const stageInfo = getStageInfoTranslated(currentAnimation);
   const progress = getProgressPercent(progressText);
-  const logDetail = getLogDetail(progressText);
+  const logDetail = getLogDetailTranslated(progressText);
 
   return (
     <div className="flex flex-col items-center justify-center h-full w-full p-8">

@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from 'next-intl';
 import { Flame, Users, Zap, ChevronRight } from 'lucide-react';
 import { priorityColors, paidInterestColors, getScoreColor } from '@/lib/design-tokens';
 
@@ -60,12 +63,14 @@ function ScoreRing({
   value,
   max = 5,
   size = 80,
-  strokeWidth = 6
+  strokeWidth = 6,
+  label
 }: {
   value: number;
   max?: number;
   size?: number;
   strokeWidth?: number;
+  label: string;
 }) {
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
@@ -106,12 +111,14 @@ function ScoreRing({
           </span>
         </div>
       </div>
-      <span className="text-xs text-neutral-400 mt-1.5 font-medium">综合指数</span>
+      <span className="text-xs text-neutral-400 mt-1.5 font-medium">{label}</span>
     </div>
   );
 }
 
 export default function ResultsTable({ results, onRowClick }: ResultsTableProps) {
+  const t = useTranslations('results');
+
   if (results.length === 0) {
     return null;
   }
@@ -183,7 +190,7 @@ export default function ResultsTable({ results, onRowClick }: ResultsTableProps)
                     {result.size} signals
                   </span>
                   <span className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center text-amber-600 font-medium">
-                    查看详情
+                    {t('viewDetails')}
                     <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
                   </span>
                 </div>
@@ -192,7 +199,7 @@ export default function ResultsTable({ results, onRowClick }: ResultsTableProps)
               {/* 右侧：综合评分圆环 */}
               {result.priority_score && (
                 <div className="flex-shrink-0 flex items-center justify-center pl-3 border-l border-neutral-100">
-                  <ScoreRing value={result.priority_score.overall} size={88} strokeWidth={7} />
+                  <ScoreRing value={result.priority_score.overall} size={88} strokeWidth={7} label={t('overallIndex')} />
                 </div>
               )}
             </div>

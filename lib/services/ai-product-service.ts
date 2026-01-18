@@ -31,12 +31,12 @@ export class AIProductService {
     this.modelName = process.env.GLM_MODEL_NAME || 'glm-4-flash';
   }
 
-  async analyzeForAIProduct(texts: string[]): Promise<AIProductAnalysis> {
+  async analyzeForAIProduct(texts: string[], locale: string = 'zh'): Promise<AIProductAnalysis> {
     if (!this.apiKey) {
       throw new Error('GLM API Key未配置');
     }
 
-    const prompt = this.buildAIProductPrompt(texts);
+    const prompt = this.buildAIProductPrompt(texts, locale);
 
     try {
       const response = await axios.post(
@@ -73,9 +73,12 @@ export class AIProductService {
     }
   }
 
-  private buildAIProductPrompt(texts: string[]): string {
+  private buildAIProductPrompt(texts: string[], locale: string = 'zh'): string {
     const textsContent = texts.slice(0, 20).join('\n---\n');
-    
+    const languageInstruction = locale === 'en'
+      ? '\n\n【输出语言】\n请使用英文输出所有内容（JSON字段名保持英文不变）。'
+      : '';
+
     return `你是一位资深的AI产品经理，精通人工智能技术和产品设计。
 
 请基于以下用户评论和内容，设计一个AI应用产品。
@@ -105,7 +108,7 @@ ${textsContent}
 5. 技术栈要实用（如：OpenAI API、LangChain、Vector DB等）
 6. 开发路线要清晰分阶段
 
-只返回JSON，不要其他内容。`;
+只返回JSON，不要其他内容。${languageInstruction}`;
   }
 
   private parseAIProductResponse(content: string): AIProductAnalysis {

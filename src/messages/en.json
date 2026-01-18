@@ -1,0 +1,260 @@
+{
+  "metadata": {
+    "title": "DeepPoint - Insight Intelligence",
+    "description": "Discover user pain points from social media, intelligent product opportunity analysis"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "aiProduct": "AI Product"
+  },
+  "home": {
+    "title": "Start Exploring",
+    "subtitle": "Define your target",
+    "emptyState": {
+      "title": "Waiting for Input",
+      "description": "Set parameters on the left to generate user pain point report"
+    },
+    "stats": {
+      "totalSignals": "Total Signals",
+      "painPoints": "Pain Points"
+    }
+  },
+  "form": {
+    "dataSource": {
+      "label": "Data Source",
+      "xiaohongshu": "Xiaohongshu - Coming Soon",
+      "douyinOld": "Douyin - Legacy",
+      "douyinNew": "Douyin - New"
+    },
+    "keywords": {
+      "label": "Keywords",
+      "placeholder": "e.g., fishing, camping, gear"
+    },
+    "deepCrawl": {
+      "title": "Deep Crawl",
+      "description": "Include comment analysis"
+    },
+    "analysisDepth": "Analysis Depth",
+    "speedFast": "Speed (Fast)",
+    "accuracySlow": "Accuracy (Slow)",
+    "douyinNewConfig": {
+      "title": "Douyin New Config",
+      "enableComments": "Crawl Comments",
+      "enableCommentsDesc": "Include user comment data",
+      "videoCount": "Video Count",
+      "commentsPerVideo": "Comments per Video",
+      "subComments": "Sub Comments",
+      "subCommentsDesc": "Crawl comment replies"
+    },
+    "submit": {
+      "analyzing": "Analyzing...",
+      "start": "Start Analysis"
+    },
+    "hint": {
+      "from": "Will analyze from",
+      "analyze": "",
+      "deepCrawl": "(deep crawl {count} videos)",
+      "videos": "({count} videos",
+      "comments": ", {count} comments each)"
+    },
+    "units": {
+      "videos": "",
+      "comments": "",
+      "clips": "clips"
+    }
+  },
+  "loading": {
+    "initializing": "Initializing...",
+    "stages": {
+      "dataStream": {
+        "title": "Collecting Data",
+        "badge": "Crawling",
+        "step": "Step 1/4"
+      },
+      "fluid": {
+        "title": "Semantic Processing",
+        "badge": "Feature Extraction",
+        "step": "Step 2/4"
+      },
+      "crystal": {
+        "title": "Smart Clustering",
+        "badge": "AI Computing",
+        "step": "Step 3/4"
+      },
+      "neural": {
+        "title": "Deep Analysis",
+        "badge": "LLM Inference",
+        "step": "Step 4/4"
+      }
+    },
+    "logs": {
+      "initializing": "Preparing analysis environment...",
+      "validating": "Validating data source connection...",
+      "crawling": "Crawling content related to \"{keyword}\"...",
+      "crawlingDefault": "Crawling related content...",
+      "semanticAnalysis": "Analyzing text semantic features...",
+      "processingVideos": "Processing {count} video contents...",
+      "processingComments": "Processing {count} comment contents...",
+      "llmAnalysis": "AI is deeply understanding user pain points...",
+      "analyzingCluster": "Analyzing pain point cluster {current}...",
+      "processing": "Processing..."
+    }
+  },
+  "results": {
+    "viewDetails": "View Details",
+    "signals": "signals",
+    "overallIndex": "Overall Index"
+  },
+  "detail": {
+    "tabs": {
+      "pain": "Pain Analysis",
+      "market": "Market Landscape",
+      "mvp": "MVP Plan",
+      "source": "Source Data"
+    },
+    "painAnalysis": {
+      "surfacePain": "Surface Pain",
+      "rootCauses": "Root Cause Analysis (3 Whys)",
+      "userScenarios": "User Scenarios",
+      "emotionalIntensity": "Emotional Intensity",
+      "strongIntent": "STRONG INTENT",
+      "moderate": "MODERATE",
+      "weak": "WEAK",
+      "noData": "No pain depth analysis data available"
+    },
+    "marketLandscape": {
+      "existingSolutions": "Existing Solutions",
+      "limitation": "Limitation",
+      "unmetNeeds": "Unmet Needs",
+      "marketOpportunity": "Market Opportunity",
+      "noData": "No market landscape data available"
+    },
+    "mvpPlan": {
+      "aiProductIdea": "AI Product Idea",
+      "coreFeatures": "Core Features",
+      "validationHypotheses": "Validation Hypotheses",
+      "hypothesis": "Hypothesis",
+      "testMethod": "Test Method",
+      "firstUsers": "First Users",
+      "timeline": "Timeline",
+      "estimatedCost": "Estimated Cost",
+      "noData": "No MVP plan data available"
+    },
+    "sourceData": {
+      "analysisRationale": "Analysis Rationale",
+      "sampleCount": "Sample Count",
+      "sourceCount": "Source Count",
+      "relevance": "Relevance",
+      "representativeTexts": "Representative Texts"
+    },
+    "priority": {
+      "demandIntensity": "Demand Intensity",
+      "marketSize": "Market Size",
+      "competition": "Competition",
+      "overallIndex": "Overall Recommendation Index",
+      "blueOcean": "Blue Ocean",
+      "redOcean": "Red Ocean",
+      "moderate": "Moderate"
+    },
+    "close": "Close"
+  },
+  "dataQuality": {
+    "reliable": {
+      "title": "Reliable Sample",
+      "message": "Sufficient data size, analysis results have high credibility"
+    },
+    "preliminary": {
+      "title": "Preliminary Validation",
+      "message": "Medium data size, recommend increasing data volume"
+    },
+    "exploratory": {
+      "title": "Exploratory Sample",
+      "message": "Small data size, for exploratory reference only"
+    },
+    "stats": {
+      "totalData": "Total Data",
+      "clusterCount": "Cluster Count",
+      "avgClusterSize": "Avg Cluster Size"
+    },
+    "suggestion": "Suggestion",
+    "dataCount": "{count} records"
+  },
+  "export": {
+    "title": "Export",
+    "downloadCSV": "Download CSV",
+    "filename": "pain_point_analysis",
+    "paidInterest": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "headers": {
+      "clusterId": "Cluster ID",
+      "clusterSize": "Cluster Size",
+      "paidInterest": "Paid Interest",
+      "corePain": "Core Pain",
+      "rationale": "Rationale",
+      "productIdea": "Product Idea",
+      "representativeTexts": "Representative Texts"
+    }
+  },
+  "rawDataExport": {
+    "title": "Raw Data",
+    "csvFormat": "CSV Format",
+    "jsonFormat": "JSON Format",
+    "clusteringAnalysis": "Clustering Analysis",
+    "exportVideosCSV": "Export Videos CSV",
+    "exportCommentsCSV": "Export Comments CSV",
+    "exportAllJSON": "Export All Data JSON",
+    "exportClusterCSV": "Export Cluster Data CSV",
+    "clusterDataUnavailable": "Cluster data unavailable",
+    "filenames": {
+      "videos": "video_data",
+      "comments": "comment_data",
+      "clusters": "cluster_data",
+      "allData": "all_raw_data"
+    },
+    "videoHeaders": {
+      "title": "Title",
+      "author": "Author",
+      "videoUrl": "Video URL",
+      "publishTime": "Publish Time",
+      "likes": "Likes",
+      "commentCount": "Comment Count",
+      "description": "Description",
+      "collectedAt": "Collected At"
+    },
+    "commentHeaders": {
+      "videoTitle": "Video Title",
+      "commentText": "Comment Text",
+      "username": "Username",
+      "likes": "Likes"
+    },
+    "clusterHeaders": {
+      "clusterId": "Cluster ID",
+      "clusterSize": "Cluster Size",
+      "dataType": "Data Type",
+      "content": "Content",
+      "usernameOrAuthor": "Username/Author",
+      "likes": "Likes",
+      "relatedVideo": "Related Video"
+    },
+    "dataTypes": {
+      "video": "Video",
+      "comment": "Comment"
+    }
+  },
+  "jobStatus": {
+    "failed": "Analysis Failed",
+    "completed": "Analysis Completed",
+    "checkResults": "Check results on the right"
+  },
+  "errors": {
+    "jobIdRequired": "Job ID is required",
+    "jobNotFound": "Job not found",
+    "serverError": "Internal server error",
+    "keywordsRequired": "Keywords are required",
+    "noValidJobId": "No valid job ID received",
+    "networkError": "Network error, please retry"
+  }
+}

@@ -11,6 +11,7 @@ export interface AIProductJob {
   keywords: string[];
   limit: number;
   dataSource: DataSourceType;
+  locale: string;  // 输出语言
   startTime: number;
   results?: AIProductResult[];
   error?: string;
@@ -25,7 +26,7 @@ export class AIProductJobManager {
   }
 
   // 创建新任务
-  public createJob(keywords: string[], limit: number = 50, dataSource: DataSourceType = 'xiaohongshu'): string {
+  public createJob(keywords: string[], limit: number = 50, dataSource: DataSourceType = 'xiaohongshu', locale: string = 'zh'): string {
     const jobId = uuidv4();
     const job: AIProductJob = {
       jobId,
@@ -34,6 +35,7 @@ export class AIProductJobManager {
       keywords,
       limit,
       dataSource,
+      locale,
       startTime: Date.now()
     };
 
@@ -108,7 +110,7 @@ export class AIProductJobManager {
       this.updateJobStatus(jobId, 'processing', '正在进行AI产品分析...');
 
       // 将所有文本合并分析，生成AI产品建议
-      const analysis = await this.aiProductService.analyzeForAIProduct(allRawTexts);
+      const analysis = await this.aiProductService.analyzeForAIProduct(allRawTexts, job.locale);
 
       const result: AIProductResult = {
         id: 'ai-product-1',
