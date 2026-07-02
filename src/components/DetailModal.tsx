@@ -75,15 +75,7 @@ interface DetailModalProps {
   result: ClusterResult | null;
 }
 
-// Tab 定义
-const tabs = [
-  { id: 'pain', label: '痛点分析', icon: Lightbulb },
-  { id: 'market', label: '市场格局', icon: Store },
-  { id: 'mvp', label: 'MVP方案', icon: Rocket },
-  { id: 'source', label: '原文依据', icon: FileText },
-] as const;
-
-type TabId = typeof tabs[number]['id'];
+type TabId = 'pain' | 'market' | 'mvp' | 'source';
 
 // 环形进度组件
 function RingGauge({

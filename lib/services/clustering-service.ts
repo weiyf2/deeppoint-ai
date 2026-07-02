@@ -90,7 +90,7 @@ export class ClusteringService {
     // eps 和 minSamples 都不设置默认值，让 Python 根据数据量自动计算
     const { eps, minSamples, minLength = 4 } = options;
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const args = [
         this.scriptPath,
         '--stdin',
@@ -139,7 +139,7 @@ export class ClusteringService {
         try {
           const result = JSON.parse(stdout);
           resolve(result);
-        } catch (e) {
+        } catch {
           console.error('解析 Python 输出失败:', stdout);
           resolve({
             success: false,
@@ -262,14 +262,14 @@ export class ClusteringService {
     // 选择长度适中的文本
     const scored = cluster.map(text => ({
       text,
-      score: this.calculateRepresentativeness(text, cluster)
+      score: this.calculateRepresentativeness(text)
     }));
 
     scored.sort((a, b) => b.score - a.score);
     return scored.slice(0, maxCount).map(item => item.text);
   }
 
-  private calculateRepresentativeness(text: string, cluster: string[]): number {
+  private calculateRepresentativeness(text: string): number {
     const textLength = text.length;
 
     // 惩罚过短或过长的文本

@@ -1,10 +1,10 @@
 // 任务管理服务
 import { v4 as uuidv4 } from 'uuid';
 import { DataSourceFactory } from './data-source-factory';
-import { DataSourceType, DouyinNewCrawlOptions } from './data-source-interface';
+import { DEFAULT_DATA_SOURCE, DataSourceType, DouyinNewCrawlOptions } from './data-source-interface';
 import { ClusteringService, ClusterResult } from './clustering-service';
 import { GLMService } from './glm-service';
-import { PriorityScorer, PriorityScore } from './priority-scoring';
+import { PriorityScorer } from './priority-scoring';
 
 // 原始视频数据接口
 export interface RawVideoData {
@@ -94,7 +94,7 @@ export class JobManager {
   public createJob(
     keywords: string[],
     limit: number = 200,
-    dataSource: DataSourceType = 'xiaohongshu',
+    dataSource: DataSourceType = DEFAULT_DATA_SOURCE,
     deepCrawl: boolean = false,
     maxVideos: number = 10,
     douyinNewOptions?: DouyinNewCrawlOptions,
@@ -312,7 +312,6 @@ export class JobManager {
       const clusters = [...videoClusters, ...commentClusters];
 
       if (clusters.length === 0) {
-        const totalTexts = videoTexts.length + commentTexts.length;
         throw new Error(
           `无法从数据中识别出有意义的聚类（需要至少3条相似数据才能形成聚类）。\n` +
           `当前数据：${videoTexts.length}条视频，${commentTexts.length}条评论。\n` +

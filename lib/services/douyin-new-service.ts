@@ -5,7 +5,7 @@ import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs/promises';
 import { getPythonCommand } from '../utils/python-detector';
-import { DeepCrawlResult, DouyinNewCrawlOptions } from './data-source-interface';
+import { DataSourceComment, DataSourceVideo, DeepCrawlResult, DouyinNewCrawlOptions } from './data-source-interface';
 
 // 新版抖音视频数据接口
 export interface DouyinNewVideo {
@@ -261,7 +261,7 @@ export class DouyinNewService {
   /**
    * 映射视频数据为通用格式
    */
-  private mapToRawVideoData(video: DouyinNewVideo): Record<string, unknown> {
+  private mapToRawVideoData(video: DouyinNewVideo): DataSourceVideo {
     // 转换 Unix 时间戳为 ISO 格式
     const createTime = video.create_time
       ? new Date(parseInt(video.create_time) * 1000).toISOString()
@@ -275,26 +275,19 @@ export class DouyinNewService {
       likes: video.liked_count,
       collected_at: new Date().toISOString(),
       comment_count: parseInt(video.comment_count) || 0,
-      description: video.desc,
-      // 扩展字段
-      aweme_id: video.aweme_id,
-      collected_count: video.collected_count,
-      share_count: video.share_count
+      description: video.desc
     };
   }
 
   /**
    * 映射评论数据为通用格式
    */
-  private mapToRawCommentData(comment: DouyinNewComment, videoTitle: string): Record<string, unknown> {
+  private mapToRawCommentData(comment: DouyinNewComment, videoTitle: string): DataSourceComment {
     return {
       video_title: videoTitle,
       comment_text: comment.content,
       username: comment.nickname,
-      likes: comment.like_count,
-      // 扩展字段
-      comment_id: comment.comment_id,
-      ip_location: comment.ip_location
+      likes: comment.like_count
     };
   }
 
@@ -304,7 +297,7 @@ export class DouyinNewService {
   async searchVideos(
     keywords: string,
     options: DouyinNewCrawlOptions
-  ): Promise<{ videos: Record<string, unknown>[]; rawTexts: string[] }> {
+  ): Promise<{ videos: DataSourceVideo[]; rawTexts: string[] }> {
     try {
       // 执行爬虫
       await this.executeCrawler(keywords, { ...options, enableComments: false });

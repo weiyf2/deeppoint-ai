@@ -1,12 +1,18 @@
 {
-  "name": "xhs-pain-point-extractor",
+  "name": "deeppoint-ai",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run lint && npm run typecheck && npm run build"
+  },
+  "engines": {
+    "node": ">=18.18.0",
+    "npm": ">=9"
   },
   "dependencies": {
     "axios": "^1.7.7",

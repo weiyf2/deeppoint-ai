@@ -2,16 +2,40 @@
 
 export type DataSourceType = 'xiaohongshu' | 'douyin' | 'douyin_new';
 
+export const DEFAULT_DATA_SOURCE: DataSourceType = 'douyin_new';
+
+export function isDataSourceType(value: unknown): value is DataSourceType {
+  return value === 'xiaohongshu' || value === 'douyin' || value === 'douyin_new';
+}
+
+export interface DataSourceVideo {
+  title?: string;
+  author?: string;
+  video_url?: string;
+  publish_time?: string;
+  likes?: string;
+  collected_at?: string;
+  comment_count?: number;
+  description?: string;
+}
+
+export interface DataSourceComment {
+  video_title?: string;
+  comment_text?: string;
+  username?: string;
+  likes?: string;
+}
+
 export interface DataSourceResult {
   rawTexts: string[];
-  videos?: any[];
-  metadata?: any;
+  videos?: DataSourceVideo[];
+  metadata?: Record<string, unknown>;
 }
 
 export interface DeepCrawlResult {
   rawTexts: string[];
-  videos?: any[];
-  allComments?: any[];
+  videos?: DataSourceVideo[];
+  allComments?: DataSourceComment[];
   videoCount?: number;
   commentCount?: number;
 }

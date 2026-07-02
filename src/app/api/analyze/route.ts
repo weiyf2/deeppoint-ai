@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jobManager } from '../../../../lib/services/job-manager';
-import { DataSourceType, DouyinNewCrawlOptions } from '../../../../lib/services/data-source-interface';
+import { DEFAULT_DATA_SOURCE, DouyinNewCrawlOptions, isDataSourceType } from '../../../../lib/services/data-source-interface';
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     const {
       keywords,
       limit = 200,
-      dataSource = 'xiaohongshu',
+      dataSource = DEFAULT_DATA_SOURCE,
       deepCrawl = false,
       maxVideos = 10,
       douyinNewConfig,  // 新版抖音配置
@@ -24,7 +24,9 @@ export async function POST(request: NextRequest) {
     }
 
     // 验证关键词格式
-    const validKeywords = keywords.filter(k => typeof k === 'string' && k.trim().length > 0);
+    const validKeywords = keywords
+      .filter(k => typeof k === 'string' && k.trim().length > 0)
+      .map(k => k.trim());
     if (validKeywords.length === 0) {
       return NextResponse.json(
         { error: "请提供有效的关键词" },
@@ -33,21 +35,19 @@ export async function POST(request: NextRequest) {
     }
 
     // 验证数据源
-    let validDataSource: DataSourceType;
-    if (dataSource === 'douyin') {
-      validDataSource = 'douyin';
-    } else if (dataSource === 'douyin_new') {
-      validDataSource = 'douyin_new';
-    } else {
-      validDataSource = 'xiaohongshu';
+    if (!isDataSourceType(dataSource)) {
+      return NextResponse.json(
+        { error: "不支持的数据源类型" },
+        { status: 400 }
+      );
     }
 
     // 深度抓取支持抖音和新版抖音
-    const enableDeepCrawl = deepCrawl && (validDataSource === 'douyin' || validDataSource === 'douyin_new');
+    const enableDeepCrawl = deepCrawl && (dataSource === 'douyin' || dataSource === 'douyin_new');
 
     // 新版抖音的完整配置
     let douyinNewOptions: DouyinNewCrawlOptions | undefined;
-    if (validDataSource === 'douyin_new' && douyinNewConfig) {
+    if (dataSource === 'douyin_new' && douyinNewConfig) {
       douyinNewOptions = {
         enableComments: douyinNewConfig.enableComments ?? true,
         maxVideos: douyinNewConfig.maxVideos ?? 15,
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     const jobId = jobManager.createJob(
       validKeywords,
       limit,
-      validDataSource,
+      dataSource,
       enableDeepCrawl,
       maxVideos,
       douyinNewOptions,

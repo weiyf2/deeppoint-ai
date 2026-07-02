@@ -133,7 +133,7 @@ export default function Home() {
   const [selectedResult, setSelectedResult] = useState<ClusterResult | null>(null);
 
   // 使用 useSWR 轮询任务状态
-  const { data: jobData, error: jobError } = useSWR<JobResponse>(
+  const { data: jobData } = useSWR<JobResponse>(
     jobId ? `/api/jobs/${jobId}` : null,
     fetcher,
     {
@@ -277,7 +277,6 @@ export default function Home() {
             <div className="h-full min-h-[500px] bg-white/70 backdrop-blur-sm border border-amber-100 rounded-3xl shadow-neuro overflow-hidden fade-in">
               <LoadingAnimation
                 progressText={jobData?.progress || tLoading('initializing')}
-                status={jobData?.status || "processing"}
               />
             </div>
           )}

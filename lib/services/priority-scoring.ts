@@ -67,8 +67,6 @@ export class PriorityScorer {
    * 基于LLM分析的现有解决方案数量
    */
   calculateCompetition(existingSolutions: Array<{ name: string; limitation: string }>): number {
-    const solutionCount = existingSolutions.length;
-
     // 过滤掉"待调研"、"解析失败"等无效方案
     const validSolutions = existingSolutions.filter(
       s => !s.name.includes('待调研') &&
