@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jobManager, RawVideoData, RawCommentData, ClusteredDataGroup } from '../../../../../lib/services/job-manager';
 import { ClusterResult } from '../../../../../lib/services/clustering-service';
+import { NO_STORE_HEADERS } from '../../../../../lib/services/http-headers';
 
 export async function GET(
   request: NextRequest,
@@ -12,7 +13,7 @@ export async function GET(
     if (!jobId) {
       return NextResponse.json(
         { error: "任务ID是必需的" },
-        { status: 400 }
+        { status: 400, headers: NO_STORE_HEADERS }
       );
     }
 
@@ -22,7 +23,7 @@ export async function GET(
     if (!job) {
       return NextResponse.json(
         { error: "任务不存在" },
-        { status: 404 }
+        { status: 404, headers: NO_STORE_HEADERS }
       );
     }
 
@@ -65,12 +66,12 @@ export async function GET(
       response.error = job.error || "任务执行失败";
     }
 
-    return NextResponse.json(response);
+    return NextResponse.json(response, { headers: NO_STORE_HEADERS });
 
   } catch {
     return NextResponse.json(
       { error: "服务器内部错误" },
-      { status: 500 }
+      { status: 500, headers: NO_STORE_HEADERS }
     );
   }
 }

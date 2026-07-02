@@ -1,35 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jobManager } from '../../../../lib/services/job-manager';
-import { DEFAULT_DATA_SOURCE, DouyinNewCrawlOptions, isDataSourceType } from '../../../../lib/services/data-source-interface';
+import { DEFAULT_DATA_SOURCE, isDataSourceType } from '../../../../lib/services/data-source-interface';
+import {
+  normalizeBoolean,
+  normalizeDouyinNewOptions,
+  normalizeInteger,
+  normalizeKeywords,
+  normalizeLocale,
+  parseJsonObject,
+  REQUEST_LIMITS
+} from '../../../../lib/services/request-validation';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const {
-      keywords,
-      limit = 200,
-      dataSource = DEFAULT_DATA_SOURCE,
-      deepCrawl = false,
-      maxVideos = 10,
-      douyinNewConfig,  // 新版抖音配置
-      locale = 'zh'  // 输出语言
-    } = body;
-
-    // 验证输入
-    if (!keywords || !Array.isArray(keywords) || keywords.length === 0) {
+    const bodyResult = await parseJsonObject(request);
+    if (!bodyResult.ok) {
       return NextResponse.json(
-        { error: "关键词是必需的，且必须是非空数组" },
+        { error: bodyResult.error },
         { status: 400 }
       );
     }
 
-    // 验证关键词格式
-    const validKeywords = keywords
-      .filter(k => typeof k === 'string' && k.trim().length > 0)
-      .map(k => k.trim());
-    if (validKeywords.length === 0) {
+    const body = bodyResult.value;
+    const {
+      keywords,
+      dataSource = DEFAULT_DATA_SOURCE,
+      douyinNewConfig
+    } = body;
+
+    // 验证输入
+    const keywordResult = normalizeKeywords(keywords);
+    if (!keywordResult.ok) {
       return NextResponse.json(
-        { error: "请提供有效的关键词" },
+        { error: keywordResult.error },
         { status: 400 }
       );
     }
@@ -42,24 +45,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const requestedDeepCrawl = normalizeBoolean(body.deepCrawl, false);
+    const limit = normalizeInteger(body.limit, REQUEST_LIMITS.analysisLimit);
+    const maxVideos = normalizeInteger(body.maxVideos, REQUEST_LIMITS.legacyDeepCrawlVideos);
+    const locale = normalizeLocale(body.locale);
+
     // 深度抓取支持抖音和新版抖音
-    const enableDeepCrawl = deepCrawl && (dataSource === 'douyin' || dataSource === 'douyin_new');
+    const enableDeepCrawl = requestedDeepCrawl && (dataSource === 'douyin' || dataSource === 'douyin_new');
 
     // 新版抖音的完整配置
-    let douyinNewOptions: DouyinNewCrawlOptions | undefined;
-    if (dataSource === 'douyin_new' && douyinNewConfig) {
-      douyinNewOptions = {
-        enableComments: douyinNewConfig.enableComments ?? true,
-        maxVideos: douyinNewConfig.maxVideos ?? 15,
-        maxCommentsPerVideo: douyinNewConfig.maxCommentsPerVideo ?? 20,
-        enableSubComments: douyinNewConfig.enableSubComments ?? false
-      };
-    }
+    const douyinNewOptions = dataSource === 'douyin_new'
+      ? normalizeDouyinNewOptions(douyinNewConfig)
+      : undefined;
+    const effectiveLimit = douyinNewOptions?.maxVideos ?? limit;
 
     // 创建分析任务
     const jobId = jobManager.createJob(
-      validKeywords,
-      limit,
+      keywordResult.value,
+      effectiveLimit,
       dataSource,
       enableDeepCrawl,
       maxVideos,

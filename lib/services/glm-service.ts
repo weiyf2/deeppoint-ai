@@ -1,5 +1,6 @@
 // GLM API服务类 - 支持 glm-4.6 思考模型
 import axios from 'axios';
+import { logger } from './logger';
 
 interface GLMMessage {
   role: 'system' | 'user' | 'assistant';
@@ -282,8 +283,8 @@ ${texts.join('\n\n')}
         return result;
 
       } catch (parseError) {
-        console.error('JSON解析失败:', parseError);
-        console.log('原始响应:', content);
+        logger.error('JSON解析失败:', parseError);
+        logger.debug('原始响应:', content);
 
         // 如果无法解析为JSON，返回基础结构
         return {
@@ -318,7 +319,7 @@ ${texts.join('\n\n')}
         };
       }
     } catch (apiError) {
-      console.error('GLM API调用失败:', apiError);
+      logger.error('GLM API调用失败:', apiError);
 
       // 返回基于文本内容的默认分析
       return {

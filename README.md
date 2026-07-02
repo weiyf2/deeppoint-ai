@@ -121,6 +121,7 @@ npm run start
 5. 点击任意行查看详细原文，或导出 CSV
 
 > **新版抖音说明**：首次使用时会弹出浏览器窗口，需要扫码登录抖音。登录状态会自动保存，后续无需重复登录。
+> 为降低个人信息暴露风险，应用层会将新版抖音数据中的作者和评论用户名匿名化为稳定的 `creator_*` 标识。
 
 ### AI 产品建议（/ai-product）
 
@@ -249,7 +250,7 @@ A: 暂不建议使用，测试发现会导致账号被封禁。
 本项目采用 MIT License。
 
 **注意**：`lib/crawlers/douyin_new/` 目录下的爬虫代码基于 MediaCrawler 项目，采用 NON-COMMERCIAL LEARNING LICENSE 1.1 许可，仅限非商业学习研究用途。
-更多第三方许可边界见 [NOTICE.md](./NOTICE.md)。
+更多第三方许可边界见 [NOTICE.md](./NOTICE.md)，上游同步维护流程见 [UPSTREAM.md](./UPSTREAM.md)。
 
 ## 致谢
 

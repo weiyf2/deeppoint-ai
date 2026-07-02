@@ -121,6 +121,7 @@ Visit http://localhost:3000
 5. Click any row to view detailed source content, or export CSV
 
 > **New Douyin Note**: On first use, a browser window will pop up requiring QR code login to Douyin. Login state is automatically saved for future use.
+> To reduce personal data exposure, the application layer anonymizes New Douyin authors and comment usernames into stable `creator_*` labels.
 
 ### AI Product Suggestions (/ai-product)
 
@@ -249,7 +250,7 @@ A: Not recommended. Testing found it causes account bans.
 This project is licensed under the MIT License.
 
 **Note**: The crawler code under `lib/crawlers/douyin_new/` is based on the MediaCrawler project, licensed under NON-COMMERCIAL LEARNING LICENSE 1.1, for non-commercial learning and research purposes only.
-See [NOTICE.md](./NOTICE.md) for third-party license boundaries.
+See [NOTICE.md](./NOTICE.md) for third-party license boundaries and [UPSTREAM.md](./UPSTREAM.md) for upstream sync maintenance.
 
 ## Acknowledgments
 

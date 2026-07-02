@@ -2,10 +2,12 @@
 // 调用本地爬虫模块并读取 CSV 结果
 
 import { spawn } from 'child_process';
+import { createHash } from 'crypto';
 import path from 'path';
 import fs from 'fs/promises';
 import { getPythonCommand } from '../utils/python-detector';
 import { DataSourceComment, DataSourceVideo, DeepCrawlResult, DouyinNewCrawlOptions } from './data-source-interface';
+import { logger } from './logger';
 
 // 新版抖音视频数据接口
 export interface DouyinNewVideo {
@@ -60,6 +62,7 @@ export class DouyinNewService {
   ): Promise<void> {
     return new Promise((resolve, reject) => {
       const mainScript = path.join(this.crawlerPath, 'main.py');
+      const headless = this.isHeadlessEnabled();
 
       const args = [
         mainScript,
@@ -68,15 +71,15 @@ export class DouyinNewService {
         '--save_data_option', 'csv',
         '--get_comment', options.enableComments ? 'true' : 'false',
         '--get_sub_comment', options.enableSubComments ? 'true' : 'false',
-        // 注意：首次运行需要扫码登录，因此禁用 headless 模式
-        // 登录状态会保存到 browser_data 目录，后续运行可以考虑启用 headless
-        '--headless', 'false'
+        '--headless', headless ? 'true' : 'false'
       ];
 
-      console.log('[DouyinNewCrawler] 启动爬虫:', this.pythonPath, args.join(' '));
-      console.log('[DouyinNewCrawler] 工作目录:', this.crawlerPath);
-      console.log('[DouyinNewCrawler] 注意：首次运行时浏览器窗口会打开，请扫描二维码登录抖音');
-      console.log('[DouyinNewCrawler] 登录成功后，状态会保存到 browser_data 目录');
+      logger.info('[DouyinNewCrawler] 启动爬虫:', this.pythonPath, args.join(' '));
+      logger.info('[DouyinNewCrawler] 工作目录:', this.crawlerPath);
+      if (!headless) {
+        logger.info('[DouyinNewCrawler] 注意：首次运行时浏览器窗口会打开，请扫描二维码登录抖音');
+        logger.info('[DouyinNewCrawler] 登录成功后，状态会保存到 browser_data 目录');
+      }
 
       const crawlerProcess = spawn(this.pythonPath, args, {
         cwd: this.crawlerPath,
@@ -100,12 +103,12 @@ export class DouyinNewService {
       crawlerProcess.stderr?.setEncoding('utf8');
       crawlerProcess.stderr?.on('data', (data) => {
         stderr += data.toString();
-        console.log('[DouyinNewCrawler]', data.toString().trim());
+        logger.info('[DouyinNewCrawler]', data.toString().trim());
       });
 
       crawlerProcess.stdout?.setEncoding('utf8');
       crawlerProcess.stdout?.on('data', (data) => {
-        console.log('[DouyinNewCrawler]', data.toString().trim());
+        logger.info('[DouyinNewCrawler]', data.toString().trim());
       });
 
       crawlerProcess.on('close', (code) => {
@@ -128,27 +131,35 @@ export class DouyinNewService {
    * 获取今日 CSV 文件路径
    */
   private getTodayCSVPaths(): { contents: string; comments: string } {
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const today = this.formatLocalDate(new Date()); // YYYY-MM-DD
     return {
       contents: path.join(this.csvOutputPath, `search_contents_${today}.csv`),
       comments: path.join(this.csvOutputPath, `search_comments_${today}.csv`)
     };
   }
 
+  private isHeadlessEnabled(): boolean {
+    return process.env.HEADLESS?.toLowerCase() === 'true';
+  }
+
+  private formatLocalDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
   /**
    * 简单的 CSV 解析器
    */
   private parseCSV(content: string): Record<string, string>[] {
-    const lines = content.split('\n').filter(line => line.trim());
-    if (lines.length < 2) return [];
+    const rows = this.parseCSVRows(content);
+    if (rows.length < 2) return [];
 
-    // 解析表头（处理带引号的字段名）
-    const headerLine = lines[0];
-    const headers = this.parseCSVLine(headerLine);
+    const [headers, ...dataRows] = rows;
 
     const records: Record<string, string>[] = [];
-    for (let i = 1; i < lines.length; i++) {
-      const values = this.parseCSVLine(lines[i]);
+    for (const values of dataRows) {
       if (values.length === headers.length) {
         const record: Record<string, string> = {};
         headers.forEach((header, index) => {
@@ -162,16 +173,17 @@ export class DouyinNewService {
   }
 
   /**
-   * 解析 CSV 行（处理引号和逗号）
+   * 解析 CSV 内容（处理引号、逗号和字段内换行）
    */
-  private parseCSVLine(line: string): string[] {
-    const result: string[] = [];
+  private parseCSVRows(content: string): string[][] {
+    const rows: string[][] = [];
+    let row: string[] = [];
     let current = '';
     let inQuotes = false;
 
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i];
-      const nextChar = line[i + 1];
+    for (let i = 0; i < content.length; i++) {
+      const char = content[i];
+      const nextChar = content[i + 1];
 
       if (char === '"') {
         if (inQuotes && nextChar === '"') {
@@ -183,15 +195,29 @@ export class DouyinNewService {
           inQuotes = !inQuotes;
         }
       } else if (char === ',' && !inQuotes) {
-        result.push(current);
+        row.push(current);
+        current = '';
+      } else if ((char === '\n' || char === '\r') && !inQuotes) {
+        if (char === '\r' && nextChar === '\n') {
+          i++;
+        }
+        row.push(current);
+        if (row.some(value => value.trim().length > 0)) {
+          rows.push(row);
+        }
+        row = [];
         current = '';
       } else {
         current += char;
       }
     }
-    result.push(current);
 
-    return result;
+    row.push(current);
+    if (row.some(value => value.trim().length > 0)) {
+      rows.push(row);
+    }
+
+    return rows;
   }
 
   /**
@@ -223,7 +249,7 @@ export class DouyinNewService {
         source_keyword: row.source_keyword || ''
       }));
     } catch (error) {
-      console.error('[DouyinNewService] 解析 Contents CSV 失败:', error);
+      logger.error('[DouyinNewService] 解析 Contents CSV 失败:', error);
       return [];
     }
   }
@@ -253,7 +279,7 @@ export class DouyinNewService {
         parent_comment_id: row.parent_comment_id || ''
       }));
     } catch (error) {
-      console.error('[DouyinNewService] 解析 Comments CSV 失败:', error);
+      logger.error('[DouyinNewService] 解析 Comments CSV 失败:', error);
       return [];
     }
   }
@@ -269,7 +295,7 @@ export class DouyinNewService {
 
     return {
       title: video.title || video.desc,
-      author: video.nickname,
+      author: this.anonymizeUserLabel(video.nickname),
       video_url: video.aweme_url,
       publish_time: createTime,
       likes: video.liked_count,
@@ -286,9 +312,23 @@ export class DouyinNewService {
     return {
       video_title: videoTitle,
       comment_text: comment.content,
-      username: comment.nickname,
+      username: this.anonymizeUserLabel(comment.nickname),
       likes: comment.like_count
     };
+  }
+
+  private anonymizeUserLabel(value: string): string {
+    const normalizedValue = value.trim();
+    if (!normalizedValue) {
+      return 'creator_unknown';
+    }
+
+    const digest = createHash('sha256')
+      .update(`douyin:${normalizedValue}`)
+      .digest('hex')
+      .slice(0, 12);
+
+    return `creator_${digest}`;
   }
 
   /**
