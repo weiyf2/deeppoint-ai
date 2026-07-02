@@ -249,6 +249,7 @@ A: 暂不建议使用，测试发现会导致账号被封禁。
 本项目采用 MIT License。
 
 **注意**：`lib/crawlers/douyin_new/` 目录下的爬虫代码基于 MediaCrawler 项目，采用 NON-COMMERCIAL LEARNING LICENSE 1.1 许可，仅限非商业学习研究用途。
+更多第三方许可边界见 [NOTICE.md](./NOTICE.md)。
 
 ## 致谢
 

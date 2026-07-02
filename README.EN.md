@@ -249,6 +249,7 @@ A: Not recommended. Testing found it causes account bans.
 This project is licensed under the MIT License.
 
 **Note**: The crawler code under `lib/crawlers/douyin_new/` is based on the MediaCrawler project, licensed under NON-COMMERCIAL LEARNING LICENSE 1.1, for non-commercial learning and research purposes only.
+See [NOTICE.md](./NOTICE.md) for third-party license boundaries.
 
 ## Acknowledgments
 

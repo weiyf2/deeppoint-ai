@@ -69,7 +69,7 @@ export class AIProductService {
 
     } catch {
       // 返回默认分析结果
-      return this.getDefaultAnalysis(texts);
+      return this.getDefaultAnalysis();
     }
   }
 
@@ -140,14 +140,14 @@ ${textsContent}
     }
   }
 
-  private validateDifficulty(value: any): "High" | "Medium" | "Low" {
+  private validateDifficulty(value: unknown): "High" | "Medium" | "Low" {
     if (value === 'High' || value === 'Medium' || value === 'Low') {
       return value;
     }
     return 'Medium';
   }
 
-  private getDefaultAnalysis(texts: string[]): AIProductAnalysis {
+  private getDefaultAnalysis(): AIProductAnalysis {
     return {
       product_name: '基于用户需求的AI助手',
       product_category: 'AI智能助手',

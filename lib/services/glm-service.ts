@@ -75,11 +75,7 @@ export class GLMService {
   private useThinking: boolean;
 
   constructor() {
-    const apiKey = process.env.GLM_API_KEY;
-    if (!apiKey) {
-      throw new Error('GLM_API_KEY 环境变量未设置');
-    }
-    this.apiKey = apiKey;
+    this.apiKey = process.env.GLM_API_KEY || '';
     this.baseURL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
     this.model = process.env.GLM_MODEL_NAME || 'glm-4.6';
     // glm-4.6 默认启用思考模式
@@ -92,6 +88,10 @@ export class GLMService {
     dataSize: number,
     locale: string = 'zh'
   ): Promise<DeepAnalysisResult> {
+    if (!this.apiKey) {
+      throw new Error('GLM_API_KEY 环境变量未设置');
+    }
+
     // 数据质量评估
     const qualityLevel = dataSize < 50 ? '小样本探索' :
                         dataSize < 200 ? '初步验证' : '可靠样本';
