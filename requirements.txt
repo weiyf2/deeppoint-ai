@@ -1,5 +1,5 @@
 # Python依赖列表
-Pillow>=9.5.0
+Pillow>=12.3.0
 opencv-python>=4.12.0.88
 
 # 环境变量加载
