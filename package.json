@@ -20,7 +20,7 @@
     "lucide-react": "^0.562.0",
     "next": "^15.5.9",
     "next-intl": "^4.7.0",
-    "node-cron": "^3.0.3",
+    "node-cron": "^4.5.0",
     "react": "19.1.2",
     "react-dom": "19.1.2",
     "swr": "^2.3.6",
