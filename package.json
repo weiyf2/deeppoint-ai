@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "security:audit": "npm audit --audit-level=moderate",
     "python:check": "python -m compileall lib",
     "check": "npm run lint && npm run typecheck && npm run build && npm run python:check"
   },
@@ -16,15 +17,13 @@
     "npm": ">=9"
   },
   "dependencies": {
-    "axios": "^1.7.7",
+    "axios": "^1.18.1",
     "lucide-react": "^0.562.0",
-    "next": "^15.5.9",
-    "next-intl": "^4.7.0",
-    "node-cron": "^3.0.3",
+    "next": "^15.5.20",
+    "next-intl": "^4.13.1",
     "react": "19.1.2",
     "react-dom": "19.1.2",
-    "swr": "^2.3.6",
-    "uuid": "^13.0.0"
+    "swr": "^2.3.6"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -32,10 +31,12 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@types/uuid": "^10.0.0",
     "eslint": "^9",
-    "eslint-config-next": "^15.5.9",
+    "eslint-config-next": "^15.5.20",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "postcss": "8.5.16"
   }
 }

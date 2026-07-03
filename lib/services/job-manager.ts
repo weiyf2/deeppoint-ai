@@ -1,5 +1,5 @@
 // 任务管理服务
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'node:crypto';
 import { DataSourceFactory } from './data-source-factory';
 import { DEFAULT_DATA_SOURCE, DataSourceType, DouyinNewCrawlOptions } from './data-source-interface';
 import { ClusteringService, ClusterResult } from './clustering-service';
@@ -104,7 +104,7 @@ export class JobManager {
   ): string {
     this.cleanupExpiredJobs();
 
-    const jobId = uuidv4();
+    const jobId = randomUUID();
     const job: Job = {
       jobId,
       status: 'processing',
