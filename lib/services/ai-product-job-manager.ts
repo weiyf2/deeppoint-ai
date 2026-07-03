@@ -4,6 +4,7 @@ import { DataSourceFactory } from './data-source-factory';
 import { DEFAULT_DATA_SOURCE, DataSourceType } from './data-source-interface';
 import { AIProductService, AIProductResult } from './ai-product-service';
 import { JOB_RETENTION, pruneExpiredJobs, trimOldestJobs } from './job-retention';
+import { getJobTimeoutMs, JsonJobStore, jobQueue, logJobEvent, withTimeout } from './job-runtime';
 
 export interface AIProductJob {
   jobId: string;
@@ -19,10 +20,14 @@ export interface AIProductJob {
 }
 
 export class AIProductJobManager {
-  private jobs: Map<string, AIProductJob> = new Map();
+  private jobs: Map<string, AIProductJob>;
+  private jobStore: JsonJobStore<AIProductJob>;
   private aiProductService: AIProductService;
+  private timedOutJobs: Set<string> = new Set();
 
   constructor() {
+    this.jobStore = new JsonJobStore<AIProductJob>('ai-product');
+    this.jobs = this.jobStore.loadAll();
     this.aiProductService = new AIProductService();
   }
 
@@ -43,11 +48,34 @@ export class AIProductJobManager {
     };
 
     this.jobs.set(jobId, job);
-    trimOldestJobs(this.jobs);
+    this.persistJob(job);
+    this.trimJobs();
+    logJobEvent('info', 'ai_product_job_created', {
+      jobId,
+      keywords,
+      dataSource
+    });
 
     // 异步执行任务
-    this.executeJob(jobId).catch(() => {
-      this.updateJobStatus(jobId, 'failed', '任务执行失败');
+    jobQueue.run(
+      jobId,
+      'ai-product',
+      () => withTimeout(
+        this.executeJob(jobId),
+        getJobTimeoutMs(),
+        `任务执行超时（${Math.round(getJobTimeoutMs() / 1000)}秒）`
+      ),
+      () => this.updateJobStatus(jobId, 'processing', '正在初始化...')
+    ).catch((error) => {
+      if (error instanceof Error && error.message.includes('超时')) {
+        this.timedOutJobs.add(jobId);
+      }
+      this.updateJobStatus(
+        jobId,
+        'failed',
+        '任务执行失败',
+        error instanceof Error ? error.message : '未知错误'
+      );
     });
 
     return jobId;
@@ -63,9 +91,20 @@ export class AIProductJobManager {
   private updateJobStatus(jobId: string, status: AIProductJob['status'], progress?: string, error?: string): void {
     const job = this.jobs.get(jobId);
     if (job) {
+      if (this.timedOutJobs.has(jobId) && status !== 'failed') {
+        return;
+      }
+
       job.status = status;
       if (progress) job.progress = progress;
       if (error) job.error = error;
+      this.persistJob(job);
+      logJobEvent(status === 'failed' ? 'error' : 'info', 'ai_product_job_status_changed', {
+        jobId,
+        status,
+        progress: job.progress,
+        error
+      });
     }
   }
 
@@ -126,8 +165,7 @@ export class AIProductJobManager {
 
       // 步骤4: 完成任务
       job.results = [result];
-      job.status = 'completed';
-      job.progress = '分析完成';
+      this.updateJobStatus(jobId, 'completed', '分析完成');
 
     } catch (error) {
       this.updateJobStatus(jobId, 'failed', '任务失败', error instanceof Error ? error.message : '未知错误');
@@ -136,11 +174,37 @@ export class AIProductJobManager {
 
   // 清理过期任务
   public cleanupExpiredJobs(maxAge: number = JOB_RETENTION.maxAgeMs): void {
+    const existingJobIds = new Set(this.jobs.keys());
     pruneExpiredJobs(this.jobs, maxAge);
+    for (const jobId of existingJobIds) {
+      if (!this.jobs.has(jobId)) {
+        this.jobStore.delete(jobId);
+      }
+    }
+  }
+
+  private trimJobs(): void {
+    const existingJobIds = new Set(this.jobs.keys());
+    trimOldestJobs(this.jobs);
+    for (const jobId of existingJobIds) {
+      if (!this.jobs.has(jobId)) {
+        this.jobStore.delete(jobId);
+      }
+    }
+  }
+
+  private persistJob(job: AIProductJob): void {
+    try {
+      this.jobStore.save(job);
+    } catch (error) {
+      logJobEvent('error', 'ai_product_job_persist_failed', {
+        jobId: job.jobId,
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
   }
 }
 
 // 全局单例实例
 export const aiProductJobManager = new AIProductJobManager();
-
 
