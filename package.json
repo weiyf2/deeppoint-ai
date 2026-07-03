@@ -24,7 +24,7 @@
     "react": "19.1.2",
     "react-dom": "19.1.2",
     "swr": "^2.3.6",
-    "uuid": "^13.0.0"
+    "uuid": "^14.0.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
