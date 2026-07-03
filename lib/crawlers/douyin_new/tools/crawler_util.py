@@ -34,9 +34,10 @@ from typing import Dict, List, Optional, Tuple, cast
 
 import httpx
 from PIL import Image, ImageDraw, ImageShow
-from playwright.async_api import Cookie, Page
+from playwright.async_api import BrowserContext, Cookie, Page
 
 from . import utils
+from .httpx_util import make_async_client
 
 
 async def find_login_qrcode(page: Page, selector: str) -> str:
@@ -47,7 +48,7 @@ async def find_login_qrcode(page: Page, selector: str) -> str:
         )
         login_qrcode_img = str(await elements.get_property("src"))  # type: ignore
         if "http://" in login_qrcode_img or "https://" in login_qrcode_img:
-            async with httpx.AsyncClient(follow_redirects=True) as client:
+            async with make_async_client(follow_redirects=True) as client:
                 utils.logger.info(f"[find_login_qrcode] get qrcode by url:{login_qrcode_img}")
                 resp = await client.get(login_qrcode_img, headers={"User-Agent": get_user_agent()})
                 if resp.status_code == 200:
@@ -142,6 +143,17 @@ def convert_cookies(cookies: Optional[List[Cookie]]) -> Tuple[str, Dict]:
     for cookie in cookies:
         cookie_dict[cookie.get('name')] = cookie.get('value')
     return cookies_str, cookie_dict
+
+
+async def convert_browser_context_cookies(
+    browser_context: BrowserContext, urls: Optional[List[str]] = None
+) -> Tuple[str, Dict]:
+    cookies = (
+        await browser_context.cookies(urls=urls)
+        if urls
+        else await browser_context.cookies()
+    )
+    return convert_cookies(cookies)
 
 
 def convert_str_cookie_to_dict(cookie_str: str) -> Dict:

@@ -67,6 +67,24 @@ The latest upstream commit at the last check (`076dcba`) is WebUI-focused and is
 not directly relevant to the local vendored Douyin crawler, but it confirms the
 upstream project is active.
 
+## Synced Douyin Changes
+
+The following upstream changes have been ported into the local Douyin subset:
+
+| Local sync | Upstream basis | Status |
+| --- | --- | --- |
+| Cookie domain filtering | `0c5f281` and current `media_platform/douyin` cookie URL handling | Ported by limiting browser cookie reads to Douyin-related domains. |
+| HTTPX SSL client factory | `125e02a` and current `tools/httpx_util.py` | Ported through local `tools/httpx_util.py` and `DISABLE_SSL_VERIFY=False` default. |
+| Existing-browser CDP connection | `5294b6d` and current `tools/cdp_browser.py` | Ported as opt-in `CDP_CONNECT_EXISTING=False` to preserve DeepPoint's current launch behavior. |
+| Privacy anonymization | `9f4f8bf` and current `store/douyin/__init__.py` | Ported by hashing raw user IDs, masking nicknames, blanking avatar/IP fields, and skipping creator profile persistence. |
+
+Skipped or intentionally deferred:
+
+- Full upstream file replacement, because DeepPoint carries local process,
+  storage, and integration changes.
+- Broad dependency lower-bound changes that do not affect the local copied code.
+- WebUI and non-Douyin platform changes.
+
 ## Sync Policy
 
 Keep sync PRs small and purpose-driven:
