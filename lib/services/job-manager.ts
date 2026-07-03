@@ -5,6 +5,8 @@ import { DEFAULT_DATA_SOURCE, DataSourceType, DouyinNewCrawlOptions } from './da
 import { ClusteringService, ClusterResult } from './clustering-service';
 import { GLMService } from './glm-service';
 import { PriorityScorer } from './priority-scoring';
+import { JOB_RETENTION, pruneExpiredJobs, trimOldestJobs } from './job-retention';
+import { logger } from './logger';
 
 // 原始视频数据接口
 export interface RawVideoData {
@@ -100,6 +102,8 @@ export class JobManager {
     douyinNewOptions?: DouyinNewCrawlOptions,
     locale: string = 'zh'
   ): string {
+    this.cleanupExpiredJobs();
+
     const jobId = uuidv4();
     const job: Job = {
       jobId,
@@ -116,6 +120,7 @@ export class JobManager {
     };
 
     this.jobs.set(jobId, job);
+    trimOldestJobs(this.jobs);
 
     // 异步执行任务
     this.executeJob(jobId).catch(() => {
@@ -127,6 +132,7 @@ export class JobManager {
 
   // 获取任务状态
   public getJob(jobId: string): Job | null {
+    this.cleanupExpiredJobs();
     return this.jobs.get(jobId) || null;
   }
 
@@ -178,10 +184,7 @@ export class JobManager {
 
           // 为新版抖音使用完整配置
           const crawlOptions = job.dataSource === 'douyin_new' && job.douyinNewOptions
-            ? {
-                maxVideos: job.douyinNewOptions.maxVideos,
-                maxCommentsPerVideo: job.douyinNewOptions.maxCommentsPerVideo
-              }
+            ? job.douyinNewOptions
             : {
                 maxVideos: job.maxVideos || 10,
                 maxCommentsPerVideo: 30
@@ -238,7 +241,7 @@ export class JobManager {
 
           const result = await dataSourceService.searchAndFetch(
             keyword,
-            Math.floor(job.limit / job.keywords.length)
+            Math.max(1, Math.floor(job.limit / job.keywords.length))
           );
 
           allRawTexts.push(...result.rawTexts);
@@ -295,7 +298,7 @@ export class JobManager {
         this.updateJobStatus(jobId, 'processing', `正在对 ${videoTexts.length} 条视频内容进行聚类...`);
         // 不传递 minClusterSize，让 Python 自动计算 min_samples
         videoClusters = await this.clusteringService.clusterTexts(videoTexts);
-        console.log(`视频聚类完成: ${videoClusters.length} 个聚类`);
+        logger.info(`视频聚类完成: ${videoClusters.length} 个聚类`);
       }
 
       // 3.2 评论内容聚类
@@ -305,7 +308,7 @@ export class JobManager {
         this.updateJobStatus(jobId, 'processing', `正在对 ${commentTexts.length} 条评论内容进行聚类...`);
         // 不传递 minClusterSize，让 Python 自动计算 min_samples
         commentClusters = await this.clusteringService.clusterTexts(commentTexts);
-        console.log(`评论聚类完成: ${commentClusters.length} 个聚类`);
+        logger.info(`评论聚类完成: ${commentClusters.length} 个聚类`);
       }
 
       // 合并聚类结果（视频聚类在前，评论聚类在后）
@@ -319,9 +322,9 @@ export class JobManager {
         );
       }
 
-      console.log(`总聚类数: ${clusters.length} (视频: ${videoClusters.length}, 评论: ${commentClusters.length})`);
+      logger.info(`总聚类数: ${clusters.length} (视频: ${videoClusters.length}, 评论: ${commentClusters.length})`);
       if (clusters.length < 3) {
-        console.warn(`⚠️ 聚类数量较少(${clusters.length}个)，可能需要更多数据或调整关键词以获得更丰富的分析结果`);
+        logger.warn(`聚类数量较少(${clusters.length}个)，可能需要更多数据或调整关键词以获得更丰富的分析结果`);
       }
 
       // 构建聚类数据分组（用于导出）
@@ -421,7 +424,7 @@ export class JobManager {
             await new Promise(resolve => setTimeout(resolve, 1000));
           }
         } catch (error) {
-          console.error(`聚类 ${i} 分析失败:`, error);
+          logger.error(`聚类 ${i} 分析失败:`, error);
           // 创建一个默认结果
           const result: ClusterResult = {
             id: this.clusteringService.generateClusterId(i),
@@ -479,13 +482,8 @@ export class JobManager {
   }
 
   // 清理过期任务（可选）
-  public cleanupExpiredJobs(maxAge: number = 24 * 60 * 60 * 1000): void {
-    const now = Date.now();
-    for (const [jobId, job] of this.jobs.entries()) {
-      if (now - job.startTime > maxAge) {
-        this.jobs.delete(jobId);
-      }
-    }
+  public cleanupExpiredJobs(maxAge: number = JOB_RETENTION.maxAgeMs): void {
+    pruneExpiredJobs(this.jobs, maxAge);
   }
 }
 

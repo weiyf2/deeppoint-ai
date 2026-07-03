@@ -7,3 +7,6 @@ The crawler code under `lib/crawlers/douyin_new/` is adapted from
 NON-COMMERCIAL LEARNING LICENSE 1.1. That directory is limited to
 non-commercial learning and research use and is not covered by the root MIT
 license grant.
+
+Upstream tracking notes and the sync procedure are documented in
+[`UPSTREAM.md`](./UPSTREAM.md).

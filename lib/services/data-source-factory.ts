@@ -2,7 +2,8 @@
 import { XHSService } from './xhs-service';
 import { DouyinService } from './douyin-service';
 import { DouyinNewService } from './douyin-new-service';
-import { IDataSourceService, DataSourceType, DataSourceResult, DeepCrawlResult, DeepCrawlOptions, DouyinNewCrawlOptions } from './data-source-interface';
+import type { IDataSourceService, DataSourceType, DataSourceResult, DeepCrawlResult, DeepCrawlOptions, DouyinNewCrawlOptions } from './data-source-interface';
+import { normalizeInteger, REQUEST_LIMITS } from './request-validation';
 
 // XHS服务适配器
 class XHSServiceAdapter implements IDataSourceService {
@@ -62,7 +63,10 @@ class DouyinNewServiceAdapter implements IDataSourceService {
   }
 
   async searchAndFetch(keywords: string, limit: number): Promise<DataSourceResult> {
-    const options = { ...this.defaultOptions, maxVideos: limit };
+    const options = {
+      ...this.defaultOptions,
+      maxVideos: normalizeInteger(limit, REQUEST_LIMITS.douyinNewVideos)
+    };
     const { rawTexts, videos } = await this.service.searchVideos(keywords, options);
     return {
       rawTexts,
@@ -72,20 +76,29 @@ class DouyinNewServiceAdapter implements IDataSourceService {
   }
 
   async searchWithComments(keywords: string, options?: DeepCrawlOptions): Promise<DeepCrawlResult> {
-    const crawlOptions: DouyinNewCrawlOptions = {
-      ...this.defaultOptions,
-      maxVideos: options?.maxVideos || this.defaultOptions.maxVideos,
-      maxCommentsPerVideo: options?.maxCommentsPerVideo || this.defaultOptions.maxCommentsPerVideo
-    };
+    const crawlOptions = this.normalizeCrawlOptions(options);
     return await this.service.searchWithComments(keywords, crawlOptions);
   }
 
   async searchWithFullOptions(keywords: string, options: DouyinNewCrawlOptions): Promise<DeepCrawlResult> {
-    return await this.service.searchWithComments(keywords, options);
+    return await this.service.searchWithComments(keywords, this.normalizeCrawlOptions(options));
   }
 
   async checkAvailability(): Promise<boolean> {
     return await this.service.checkAvailability();
+  }
+
+  private normalizeCrawlOptions(options?: DeepCrawlOptions): DouyinNewCrawlOptions {
+    return {
+      ...this.defaultOptions,
+      enableComments: options?.enableComments ?? this.defaultOptions.enableComments,
+      maxVideos: normalizeInteger(options?.maxVideos, REQUEST_LIMITS.douyinNewVideos),
+      maxCommentsPerVideo: normalizeInteger(
+        options?.maxCommentsPerVideo,
+        REQUEST_LIMITS.douyinNewCommentsPerVideo
+      ),
+      enableSubComments: options?.enableSubComments ?? this.defaultOptions.enableSubComments
+    };
   }
 }
 

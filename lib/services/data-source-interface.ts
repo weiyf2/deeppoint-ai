@@ -41,8 +41,10 @@ export interface DeepCrawlResult {
 }
 
 export interface DeepCrawlOptions {
+  enableComments?: boolean;
   maxVideos?: number;
   maxCommentsPerVideo?: number;
+  enableSubComments?: boolean;
 }
 
 // 新版抖音爬虫配置选项

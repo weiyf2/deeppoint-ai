@@ -1,6 +1,7 @@
 // 聚类分析服务 - 基于语义向量化 + DBSCAN
 import { spawn } from 'child_process';
 import * as path from 'path';
+import { logger } from './logger';
 
 export interface SemanticCluster {
   representative_text: string;
@@ -120,12 +121,12 @@ export class ClusteringService {
       pythonProcess.stderr.on('data', (data) => {
         stderr += data.toString();
         // 将 Python 日志输出到控制台
-        console.log('[Python]', data.toString().trim());
+        logger.info('[Python]', data.toString().trim());
       });
 
       pythonProcess.on('close', (code) => {
         if (code !== 0) {
-          console.error('Python 聚类脚本执行失败:', stderr);
+          logger.error('Python 聚类脚本执行失败:', stderr);
           resolve({
             success: false,
             clusters: [],
@@ -140,7 +141,7 @@ export class ClusteringService {
           const result = JSON.parse(stdout);
           resolve(result);
         } catch {
-          console.error('解析 Python 输出失败:', stdout);
+          logger.error('解析 Python 输出失败:', stdout);
           resolve({
             success: false,
             clusters: [],
@@ -152,7 +153,7 @@ export class ClusteringService {
       });
 
       pythonProcess.on('error', (err) => {
-        console.error('启动 Python 进程失败:', err);
+        logger.error('启动 Python 进程失败:', err);
         resolve({
           success: false,
           clusters: [],
@@ -181,7 +182,7 @@ export class ClusteringService {
 
     if (!result.success || result.clusters.length === 0) {
       // 降级到基础聚类
-      console.warn('语义聚类失败，使用基础聚类');
+      logger.warn('语义聚类失败，使用基础聚类');
       return this.fallbackCluster(texts, minClusterSize);
     }
 
@@ -196,7 +197,7 @@ export class ClusteringService {
     const result = await this.clusterTextsWithEmbeddings(texts);
 
     if (!result.success) {
-      console.warn('语义聚类失败:', result.error);
+      logger.warn('语义聚类失败:', result.error);
       return [];
     }
 
@@ -215,7 +216,7 @@ export class ClusteringService {
 
     // 如果数据量太小无法形成有意义的聚类，返回空数组
     if (texts.length < effectiveMinSize) {
-      console.warn(`数据量(${texts.length})不足以形成有意义的聚类(需要至少${effectiveMinSize}条)`);
+      logger.warn(`数据量(${texts.length})不足以形成有意义的聚类(需要至少${effectiveMinSize}条)`);
       return [];
     }
 
@@ -246,7 +247,7 @@ export class ClusteringService {
 
     // 如果过滤后没有结果，检查是否可以放宽要求
     if (result.length === 0 && texts.length >= 3) {
-      console.warn('Fallback聚类未找到匹配，尝试将所有文本作为单个聚类');
+      logger.warn('Fallback聚类未找到匹配，尝试将所有文本作为单个聚类');
       return [texts];
     }
 

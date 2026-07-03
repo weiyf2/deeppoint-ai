@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { DataSourceFactory } from './data-source-factory';
 import { DEFAULT_DATA_SOURCE, DataSourceType } from './data-source-interface';
 import { AIProductService, AIProductResult } from './ai-product-service';
+import { JOB_RETENTION, pruneExpiredJobs, trimOldestJobs } from './job-retention';
 
 export interface AIProductJob {
   jobId: string;
@@ -27,6 +28,8 @@ export class AIProductJobManager {
 
   // 创建新任务
   public createJob(keywords: string[], limit: number = 50, dataSource: DataSourceType = DEFAULT_DATA_SOURCE, locale: string = 'zh'): string {
+    this.cleanupExpiredJobs();
+
     const jobId = uuidv4();
     const job: AIProductJob = {
       jobId,
@@ -40,6 +43,7 @@ export class AIProductJobManager {
     };
 
     this.jobs.set(jobId, job);
+    trimOldestJobs(this.jobs);
 
     // 异步执行任务
     this.executeJob(jobId).catch(() => {
@@ -51,6 +55,7 @@ export class AIProductJobManager {
 
   // 获取任务状态
   public getJob(jobId: string): AIProductJob | null {
+    this.cleanupExpiredJobs();
     return this.jobs.get(jobId) || null;
   }
 
@@ -92,7 +97,7 @@ export class AIProductJobManager {
 
         const { rawTexts } = await dataSourceService.searchAndFetch(
           keyword,
-          Math.floor(job.limit / job.keywords.length)
+          Math.max(1, Math.floor(job.limit / job.keywords.length))
         );
 
         allRawTexts.push(...rawTexts);
@@ -130,13 +135,8 @@ export class AIProductJobManager {
   }
 
   // 清理过期任务
-  public cleanupExpiredJobs(maxAge: number = 24 * 60 * 60 * 1000): void {
-    const now = Date.now();
-    for (const [jobId, job] of this.jobs.entries()) {
-      if (now - job.startTime > maxAge) {
-        this.jobs.delete(jobId);
-      }
-    }
+  public cleanupExpiredJobs(maxAge: number = JOB_RETENTION.maxAgeMs): void {
+    pruneExpiredJobs(this.jobs, maxAge);
   }
 }
 
