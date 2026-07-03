@@ -66,6 +66,10 @@ CUSTOM_BROWSER_PATH = ""
 # 注意：即使设置为True，某些反检测功能在无头模式下可能效果不佳
 CDP_HEADLESS = False
 
+# Whether to connect to an already-running browser with remote debugging.
+# Default stays False to preserve DeepPoint's existing launch behavior.
+CDP_CONNECT_EXISTING = False
+
 # 浏览器启动超时时间（秒）
 BROWSER_LAUNCH_TIMEOUT = 60
 
@@ -102,6 +106,9 @@ ENABLE_GET_SUB_COMMENTS = False
 
 # 爬取间隔时间
 CRAWLER_MAX_SLEEP_SEC = 2
+
+# Disable SSL verification only for local debugging behind an intercepting proxy.
+DISABLE_SSL_VERIFY = False
 
 # 只导入抖音平台配置
 from .dy_config import *

@@ -16,12 +16,10 @@ export interface DouyinNewVideo {
   desc: string;
   create_time: string;
   nickname: string;
-  avatar: string;
   liked_count: string;
   collected_count: string;
   comment_count: string;
   share_count: string;
-  ip_location: string;
   aweme_url: string;
   cover_url: string;
   source_keyword: string;
@@ -31,11 +29,9 @@ export interface DouyinNewVideo {
 export interface DouyinNewComment {
   comment_id: string;
   create_time: string;
-  ip_location: string;
   aweme_id: string;
   content: string;
   nickname: string;
-  avatar: string;
   sub_comment_count: string;
   like_count: string;
   parent_comment_id: string;
@@ -238,12 +234,10 @@ export class DouyinNewService {
         desc: row.desc || '',
         create_time: row.create_time || '',
         nickname: row.nickname || '',
-        avatar: row.avatar || '',
         liked_count: row.liked_count || '0',
         collected_count: row.collected_count || '0',
         comment_count: row.comment_count || '0',
         share_count: row.share_count || '0',
-        ip_location: row.ip_location || '',
         aweme_url: row.aweme_url || '',
         cover_url: row.cover_url || '',
         source_keyword: row.source_keyword || ''
@@ -269,11 +263,9 @@ export class DouyinNewService {
       return records.map((row) => ({
         comment_id: row.comment_id || '',
         create_time: row.create_time || '',
-        ip_location: row.ip_location || '',
         aweme_id: row.aweme_id || '',
         content: row.content || '',
         nickname: row.nickname || '',
-        avatar: row.avatar || '',
         sub_comment_count: row.sub_comment_count || '0',
         like_count: row.like_count || '0',
         parent_comment_id: row.parent_comment_id || ''
