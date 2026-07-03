@@ -11,7 +11,7 @@ A web application that helps indie developers automatically discover user pain p
 ### Pain Point Analysis Module
 - Automatic crawling of Douyin (TikTok China) videos and comments by keywords
 - Semantic clustering algorithm based on embedding + DBSCAN
-- Deep analysis using GLM-4.6 thinking model
+- Deep analysis through configurable AI providers (GLM / OpenAI / Ollama / LM Studio)
 - **In-depth Analysis Dimensions**:
   - Pain Depth: Surface pain → Root causes → User scenarios → Emotional intensity
   - Market Landscape: Existing solutions → Unmet needs → Opportunity analysis
@@ -55,40 +55,39 @@ A web application that helps indie developers automatically discover user pain p
 
 - Node.js >= 18
 - Python >= 3.10
-- npm or pnpm
+- npm
 - Google Chrome
+- Windows PowerShell (for the one-command local setup script)
 
 ### 1. Install Dependencies
 
 ```bash
-# Clone the project
-git clone https://github.com/your-username/deeppoint-ai.git
+git clone https://github.com/weiyf2/deeppoint-ai.git
 cd deeppoint-ai
 
-# Install Node.js dependencies
-npm install
+# Option A: prepare local dependencies, Python venv, Playwright Chromium, and .env.local
+npm run setup:local
 
-# Install Python dependencies
+# Option B: manual setup
+npm ci
 pip install -r requirements.txt
-
-# If using the new Douyin data source, also install the browser
 playwright install chromium
-
-# Or manually install core dependencies
-pip install DrissionPage beautifulsoup4 lxml scikit-learn numpy python-dotenv
 ```
 
 ### 2. Configure Environment Variables
 
 ```bash
+# Only copy manually if you did not run npm run setup:local
 cp .env.example .env.local
 ```
 
 Edit `.env.local`:
 
 ```env
-# Zhipu AI GLM API Configuration (Required)
-# Register at: https://open.bigmodel.cn/
+# AI chat provider: glm | openai | ollama | lmstudio
+AI_PROVIDER=glm
+
+# Default is GLM. For OpenAI/Ollama/LM Studio, change AI_PROVIDER and configure that provider.
 GLM_API_KEY=your_glm_api_key_here
 GLM_MODEL_NAME=glm-4.6
 GLM_EMBEDDING_MODEL=embedding-3
@@ -128,6 +127,19 @@ Visit http://localhost:3000
 1. Enter keywords for your target domain
 2. AI will analyze user feedback and generate a complete product solution
 3. View product name, features, tech stack, development plan, etc.
+
+### AI Provider
+
+Chat analysis supports `AI_PROVIDER=glm|openai|ollama|lmstudio`. GLM and OpenAI require API keys; Ollama and LM Studio use local OpenAI-compatible servers by default.
+
+| Provider | Key settings | Default URL |
+|----------|--------------|-------------|
+| GLM | `GLM_API_KEY`, `GLM_MODEL_NAME`, `GLM_EMBEDDING_MODEL` | `https://open.bigmodel.cn/api/paas/v4` |
+| OpenAI | `OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_EMBEDDING_MODEL` | `https://api.openai.com/v1` |
+| Ollama | `OLLAMA_MODEL`, `OLLAMA_EMBEDDING_MODEL` | `http://localhost:11434/v1` |
+| LM Studio | `LM_STUDIO_MODEL`, `LM_STUDIO_EMBEDDING_MODEL` | `http://localhost:1234/v1` |
+
+`EMBEDDING_PROVIDER` follows `AI_PROVIDER` by default and can also be set separately. Semantic clustering requires an embedding model. For Ollama, run `ollama pull llama3.1` and `ollama pull nomic-embed-text` first.
 
 ### Language Switching
 
@@ -182,7 +194,8 @@ deeppoint-ai/
 │   │   ├── job-manager.ts        # Job management core
 │   │   ├── douyin-service.ts     # Douyin data service
 │   │   ├── xhs-service.ts        # Xiaohongshu service (paused)
-│   │   ├── glm-service.ts        # GLM LLM service
+│   │   ├── ai-provider.ts        # AI provider adapter
+│   │   ├── glm-service.ts        # Deep analysis service
 │   │   ├── clustering-service.ts # Clustering service (Python integration)
 │   │   ├── priority-scoring.ts   # Priority scoring system
 │   │   ├── ai-product-service.ts # AI product analysis
@@ -195,6 +208,7 @@ deeppoint-ai/
 │   ├── xiaohongshu_tool.py       # Xiaohongshu crawler script (paused)
 │   └── semantic_clustering.py    # Semantic clustering (embedding + DBSCAN)
 ├── .env.example                  # Environment variable template
+├── scripts/setup-local.ps1        # Windows local setup script
 ├── package.json
 ├── requirements.txt              # Python dependencies
 └── tsconfig.json
@@ -210,16 +224,27 @@ deeppoint-ai/
 | Data Fetching | SWR (job status polling) |
 | Backend | Next.js API Routes |
 | Data Collection | Python + DrissionPage / Playwright |
-| AI Analysis | Zhipu GLM-4.6 (thinking model) + embedding-3 |
+| AI Analysis | GLM / OpenAI / Ollama / LM Studio (OpenAI-compatible chat + embedding) |
 | Clustering Algorithm | Embedding + DBSCAN semantic clustering |
 
 ## API Configuration
 
-### Zhipu AI (Required)
+### AI Provider
+
+GLM is the default provider:
 
 1. Register at: https://open.bigmodel.cn/
 2. Create an API Key
 3. Configure in `GLM_API_KEY` environment variable
+
+To switch providers, set values like this in `.env.local`:
+
+```env
+AI_PROVIDER=ollama
+EMBEDDING_PROVIDER=ollama
+OLLAMA_MODEL=llama3.1
+OLLAMA_EMBEDDING_MODEL=nomic-embed-text
+```
 
 ## FAQ
 
@@ -228,6 +253,9 @@ A: Douyin uses browser automation to simulate real users, so slower speed is nor
 
 ### Q: How to deploy on a server?
 A: Set `HEADLESS=true` environment variable to enable headless browser mode.
+
+### Q: Can I use fully local models?
+A: Yes. Use `AI_PROVIDER=ollama` or `AI_PROVIDER=lmstudio`, and make sure the local server exposes both chat and embedding OpenAI-compatible endpoints.
 
 ### Q: Too few clustering results?
 A: Try more keywords, or adjust the `minClusterSize` parameter in `clustering-service.ts`.
@@ -240,6 +268,7 @@ A: Not recommended. Testing found it causes account bans.
 - [x] Douyin data source support
 - [x] Pain point clustering analysis
 - [x] AI product solution generation
+- [x] AI Provider abstraction (GLM / OpenAI / Ollama / LM Studio)
 - [x] Deep crawling (with comments)
 - [x] Multi-language support (Chinese/English)
 - [ ] More data sources (Zhihu, Weibo)

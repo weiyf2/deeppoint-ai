@@ -1,5 +1,5 @@
 // AI产品分析服务
-import axios from 'axios';
+import { AIChatProvider, createAIChatProvider, getAIProviderName } from './ai-provider';
 
 export interface AIProductAnalysis {
   product_name: string;
@@ -22,46 +22,32 @@ export interface AIProductResult {
 }
 
 export class AIProductService {
-  private apiKey: string;
-  private modelName: string;
-  private baseUrl: string = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+  private provider: AIChatProvider;
 
   constructor() {
-    this.apiKey = process.env.GLM_API_KEY || '';
-    this.modelName = process.env.GLM_MODEL_NAME || 'glm-4-flash';
+    const providerName = getAIProviderName();
+    const modelOverride = process.env.AI_PRODUCT_MODEL_NAME ||
+      (providerName === 'glm' ? (process.env.GLM_MODEL_NAME || 'glm-4-flash') : undefined);
+    this.provider = createAIChatProvider(modelOverride);
   }
 
   async analyzeForAIProduct(texts: string[], locale: string = 'zh'): Promise<AIProductAnalysis> {
-    if (!this.apiKey) {
-      throw new Error('GLM API Key未配置');
-    }
-
     const prompt = this.buildAIProductPrompt(texts, locale);
 
     try {
-      const response = await axios.post(
-        this.baseUrl,
+      const content = await this.provider.complete(
+        [
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
         {
-          model: this.modelName,
-          messages: [
-            {
-              role: 'user',
-              content: prompt
-            }
-          ],
           temperature: 0.7,
-          top_p: 0.8,
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          timeout: 60000,
+          topP: 0.8,
+          timeoutMs: 60000
         }
       );
-
-      const content = response.data.choices[0].message.content;
 
       // 解析JSON响应
       const analysis = this.parseAIProductResponse(content);
@@ -178,5 +164,4 @@ ${textsContent}
     };
   }
 }
-
 

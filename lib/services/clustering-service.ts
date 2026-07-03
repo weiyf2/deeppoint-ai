@@ -78,7 +78,7 @@ export class ClusteringService {
 
   /**
    * 调用 Python 语义聚类服务
-   * 使用智谱 Embedding + DBSCAN 算法
+   * 使用可配置的 Embedding provider + DBSCAN 算法
    */
   public async clusterTextsWithEmbeddings(
     texts: string[],

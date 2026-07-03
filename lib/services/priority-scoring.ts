@@ -32,12 +32,12 @@ export class PriorityScorer {
 
   /**
    * 计算市场规模（0-5分）
-   * 结合数据维度得分（40%）和 GLM 评估的市场规模（60%）
+   * 结合数据维度得分（40%）和 AI 模型评估的市场规模（60%）
    */
   calculateMarketSize(
     clusterSize: number,
     totalDataSize: number,
-    glmMarketScore: number  // GLM 评估的市场规模 0-5
+    glmMarketScore: number  // AI 模型评估的市场规模 0-5
   ): number {
     // 数据维度得分：基于聚类占比和数据量
     let dataScore = 2.5;  // 基础分
@@ -55,7 +55,7 @@ export class PriorityScorer {
       }
     }
 
-    // 加权计算：数据维度 40% + GLM评估 60%
+    // 加权计算：数据维度 40% + AI 模型评估 60%
     const total = dataScore * 0.4 + glmMarketScore * 0.6;
 
     return Math.round(total * 10) / 10;
@@ -126,7 +126,7 @@ export class PriorityScorer {
     clusterSize: number;
     totalDataSize: number;
     emotionalIntensity: number;
-    glmMarketScore: number;  // GLM 评估的市场规模 0-5
+    glmMarketScore: number;  // AI 模型评估的市场规模 0-5
     existingSolutions: Array<{ name: string; limitation: string }>;
   }): PriorityScore {
     const demandScore = this.calculateDemandIntensity(
