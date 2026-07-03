@@ -1,5 +1,5 @@
 // AI产品分析任务管理器
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'node:crypto';
 import { DataSourceFactory } from './data-source-factory';
 import { DEFAULT_DATA_SOURCE, DataSourceType } from './data-source-interface';
 import { AIProductService, AIProductResult } from './ai-product-service';
@@ -27,7 +27,7 @@ export class AIProductJobManager {
 
   // 创建新任务
   public createJob(keywords: string[], limit: number = 50, dataSource: DataSourceType = DEFAULT_DATA_SOURCE, locale: string = 'zh'): string {
-    const jobId = uuidv4();
+    const jobId = randomUUID();
     const job: AIProductJob = {
       jobId,
       status: 'processing',
