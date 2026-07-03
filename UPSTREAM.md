@@ -2,6 +2,7 @@
 
 This document records how DeepPoint tracks vendored third-party crawler code.
 It exists so future sync work is reviewable, repeatable, and license-aware.
+The authoritative vendored-code inventory is maintained in `VENDORED.md`.
 
 ## Vendored Component
 
@@ -14,12 +15,15 @@ It exists so future sync work is reviewable, repeatable, and license-aware.
 | Local license boundary | Excluded from the root MIT license grant; see `NOTICE.md` |
 | DeepPoint import commit | `2d857cea81202924b901e845ce30d55e224d0062` (`2026-01-10`) |
 | Recorded upstream baseline | Unknown; no upstream commit SHA was recorded when the code was imported |
-| Last upstream check | `2026-07-02` |
+| Last upstream check | `2026-07-03` |
 | Upstream `main` at last check | `076dcba978b102bb12ff69ba226d1d39158481e5` |
+| Vendored inventory | `VENDORED.md` |
 
-The local import commit is not a substitute for an upstream baseline SHA. Before
-the first real sync, identify the closest upstream MediaCrawler commit by diffing
-the mapped paths below and record the selected baseline in this table.
+The local import commit is not a substitute for an upstream baseline SHA. The
+exact original upstream import SHA was not recorded, so current sync work uses
+the reviewed upstream SHA above as the comparison point and records accepted or
+skipped commits in this document. If a future path-level diff reconstructs the
+original import SHA, update both this file and `VENDORED.md`.
 
 ## Path Mapping
 
@@ -40,6 +44,9 @@ DeepPoint-specific integration lives outside the vendored subtree, especially in
 `lib/services/douyin-new-service.ts`, where Next.js starts the Python crawler and
 reads CSV output. That integration layer anonymizes New Douyin authors and
 comment usernames before returning API/export data.
+
+For the full vendored inventory, local adaptation list, privacy boundary, and
+license boundary, see `VENDORED.md`.
 
 ## Current Upstream Delta
 
@@ -74,7 +81,9 @@ Keep sync PRs small and purpose-driven:
    `DouyinNewService` starts the crawler, reads CSV files, maps rows into
    `DataSourceVideo` and `DataSourceComment`, and returns `DeepCrawlResult`.
 6. Update `requirements.txt` only when the synced code needs it.
-7. Update this document with the new upstream baseline, reviewed commits, and
+7. Update `VENDORED.md` when path mappings, local adaptations, privacy policy,
+   or license boundaries change.
+8. Update this document with the new upstream baseline, reviewed commits, and
    skipped commits.
 
 Do not sync unrelated upstream platforms, WebUI code, database backends, or broad
@@ -98,6 +107,8 @@ on external platform behavior and login state.
 
 - Keep upstream copyright and repository headers in vendored files.
 - Keep `NOTICE.md` accurate whenever vendored scope changes.
+- Keep `VENDORED.md` accurate whenever path mappings or local adaptations
+  change.
 - Do not describe `lib/crawlers/douyin_new/` as MIT-licensed.
 - Treat upstream privacy-oriented changes as high priority because DeepPoint
   stores and exports raw crawler data.
