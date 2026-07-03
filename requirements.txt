@@ -20,7 +20,7 @@ lxml>=4.9.0
 
 # 新版抖音爬虫依赖
 httpx==0.28.1
-playwright>=1.45.0
+playwright>=1.61.0
 pydantic>=2.5.2
 tenacity>=8.2.2
 aiofiles>=23.2.1
