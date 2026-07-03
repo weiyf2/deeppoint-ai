@@ -62,6 +62,9 @@ ENV/
 logs/
 *.log
 
+# Local runtime state
+.deeppoint/
+
 # OS
 Thumbs.db
 
