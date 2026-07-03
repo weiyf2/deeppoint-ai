@@ -417,7 +417,7 @@ export class JobManager {
         const representativeTexts = this.clusteringService.getRepresentativeTexts(cluster, 8);
 
         try {
-          // 调用GLM分析聚类（传递关键词、数据规模和语言）
+          // 调用 AI provider 分析聚类（传递关键词、数据规模和语言）
           const analysis = await this.glmService.analyzeCluster(
             representativeTexts,
             job.keywords,

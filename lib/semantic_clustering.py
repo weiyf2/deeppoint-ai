@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-语义聚类服务 - 基于智谱AI Embedding + DBSCAN
+语义聚类服务 - 基于 Embedding + DBSCAN
 替代原有的 Jaccard 聚类算法，提供更好的语义相似度聚类
 """
 
@@ -10,7 +10,7 @@ import os
 import re
 import time
 import logging
-from typing import List, Dict, Optional, Tuple
+from typing import Any, List, Dict, Optional, Tuple
 from pathlib import Path
 
 import numpy as np
@@ -224,18 +224,84 @@ class DataCleaner:
 
 # ==================== Embedding 模块 ====================
 
-class ZhipuEmbedding:
-    """智谱AI Embedding 服务"""
+SUPPORTED_EMBEDDING_PROVIDERS = {'glm', 'openai', 'ollama', 'lmstudio'}
+
+
+def normalize_embedding_provider(value: Optional[str]) -> str:
+    """读取并规范化 Embedding provider 名称"""
+    provider = (value or os.getenv('AI_PROVIDER') or 'glm').strip().lower()
+    if provider in SUPPORTED_EMBEDDING_PROVIDERS:
+        return provider
+    return 'glm'
+
+
+def join_embeddings_url(base_url: str) -> str:
+    """拼接 OpenAI-compatible embeddings endpoint"""
+    trimmed_url = base_url.rstrip('/')
+    if trimmed_url.endswith('/embeddings'):
+        return trimmed_url
+    return f'{trimmed_url}/embeddings'
+
+
+class EmbeddingProvider:
+    """OpenAI-compatible Embedding 服务"""
 
     def __init__(self, api_key: Optional[str] = None):
-        self.api_key = api_key or os.getenv('GLM_API_KEY')
-        if not self.api_key:
-            raise ValueError("未找到 GLM_API_KEY，请在 .env.local 或环境变量中配置")
+        self.provider = normalize_embedding_provider(os.getenv('EMBEDDING_PROVIDER'))
+        self.api_key = api_key or self._read_api_key()
+        self.base_url = self._read_base_url()
+        self.model = self._read_model()
+        self.batch_size = 25
+        self.rate_limit_delay = 0.5 if self.provider == 'glm' else 0.0
 
-        self.base_url = "https://open.bigmodel.cn/api/paas/v4/embeddings"
-        self.model = os.getenv('GLM_EMBEDDING_MODEL', 'embedding-3')
-        self.batch_size = 25  # 每批最大数量
-        self.rate_limit_delay = 0.5  # 请求间隔（秒）
+        if self._requires_api_key() and not self.api_key:
+            env_name = 'GLM_API_KEY' if self.provider == 'glm' else 'OPENAI_API_KEY'
+            raise ValueError(f"未找到 {env_name}，请在 .env.local 或环境变量中配置")
+
+    def _read_api_key(self) -> str:
+        if self.provider == 'openai':
+            return os.getenv('OPENAI_API_KEY', '')
+        if self.provider == 'ollama':
+            return os.getenv('OLLAMA_API_KEY', '')
+        if self.provider == 'lmstudio':
+            return os.getenv('LM_STUDIO_API_KEY', '')
+        return os.getenv('GLM_API_KEY', '')
+
+    def _read_base_url(self) -> str:
+        if self.provider == 'openai':
+            return os.getenv('OPENAI_BASE_URL', 'https://api.openai.com/v1')
+        if self.provider == 'ollama':
+            return os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434/v1')
+        if self.provider == 'lmstudio':
+            return os.getenv('LM_STUDIO_BASE_URL', 'http://localhost:1234/v1')
+        return os.getenv('GLM_BASE_URL', 'https://open.bigmodel.cn/api/paas/v4')
+
+    def _read_model(self) -> str:
+        generic_model = os.getenv('EMBEDDING_MODEL')
+        if generic_model:
+            return generic_model
+        if self.provider == 'openai':
+            return os.getenv('OPENAI_EMBEDDING_MODEL', 'text-embedding-3-small')
+        if self.provider == 'ollama':
+            return os.getenv('OLLAMA_EMBEDDING_MODEL', 'nomic-embed-text')
+        if self.provider == 'lmstudio':
+            return os.getenv('LM_STUDIO_EMBEDDING_MODEL', 'local-embedding-model')
+        return os.getenv('GLM_EMBEDDING_MODEL', 'embedding-3')
+
+    def _requires_api_key(self) -> bool:
+        return self.provider in {'glm', 'openai'}
+
+    def _extract_embedding(self, result: Dict[str, Any]) -> List[float]:
+        data = result.get('data')
+        if isinstance(data, list) and data:
+            embedding = data[0].get('embedding') if isinstance(data[0], dict) else None
+        else:
+            embedding = result.get('embedding')
+
+        if not isinstance(embedding, list):
+            raise ValueError(f"{self.provider} Embedding API 返回格式无效")
+
+        return embedding
 
     def _get_embedding_batch(self, texts: List[str]) -> List[List[float]]:
         """获取一批文本的 embedding"""
@@ -243,11 +309,11 @@ class ZhipuEmbedding:
         import urllib.error
 
         headers = {
-            'Authorization': f'Bearer {self.api_key}',
             'Content-Type': 'application/json'
         }
+        if self.api_key:
+            headers['Authorization'] = f'Bearer {self.api_key}'
 
-        # 智谱 API 需要逐个请求
         embeddings = []
         for text in texts:
             data = json.dumps({
@@ -255,23 +321,22 @@ class ZhipuEmbedding:
                 'input': text
             }).encode('utf-8')
 
-            req = urllib.request.Request(self.base_url, data=data, headers=headers)
+            req = urllib.request.Request(join_embeddings_url(self.base_url), data=data, headers=headers)
 
             try:
                 with urllib.request.urlopen(req, timeout=30) as response:
                     result = json.loads(response.read().decode('utf-8'))
-                    embedding = result['data'][0]['embedding']
-                    embeddings.append(embedding)
+                    embeddings.append(self._extract_embedding(result))
             except urllib.error.HTTPError as e:
                 error_body = e.read().decode('utf-8')
-                logger.error(f"API 错误: {e.code} - {error_body}")
+                logger.error(f"{self.provider} Embedding API 错误: {e.code} - {error_body}")
                 raise
             except Exception as e:
-                logger.error(f"请求失败: {e}")
+                logger.error(f"{self.provider} Embedding 请求失败: {e}")
                 raise
 
-            # 添加延迟避免限流
-            time.sleep(self.rate_limit_delay)
+            if self.rate_limit_delay > 0:
+                time.sleep(self.rate_limit_delay)
 
         return embeddings
 
@@ -289,7 +354,7 @@ class ZhipuEmbedding:
         for i in range(0, len(texts), self.batch_size):
             batch = texts[i:i + self.batch_size]
             batch_num = i // self.batch_size + 1
-            logger.info(f"正在获取 Embedding: 批次 {batch_num}/{total_batches} ({len(batch)} 条)")
+            logger.info(f"正在获取 Embedding: provider={self.provider}, model={self.model}, 批次 {batch_num}/{total_batches} ({len(batch)} 条)")
 
             embeddings = self._get_embedding_batch(batch)
             all_embeddings.extend(embeddings)
@@ -568,7 +633,7 @@ def process_texts(
 
     # 2. 获取 Embedding
     logger.info("开始获取 Embedding...")
-    embedder = ZhipuEmbedding()
+    embedder = EmbeddingProvider()
     embeddings = embedder.get_embeddings(cleaned_texts)
 
     # 3. 参数优化（如果启用）

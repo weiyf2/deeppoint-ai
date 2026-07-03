@@ -11,7 +11,7 @@
 ### 痛点分析模块
 - 输入关键词自动抓取抖音相关视频和评论
 - 基于 embedding + DBSCAN 的语义聚类算法
-- 调用 GLM-4.6 思考模型深度分析用户痛点
+- 调用可配置 AI Provider 深度分析用户痛点（GLM / OpenAI / Ollama / LM Studio）
 - **深度分析维度**：
   - 痛点深度：表面痛点 → 根本原因 → 用户场景 → 情感强度
   - 市场格局：现有方案 → 未满足需求 → 机会分析
@@ -55,40 +55,39 @@
 
 - Node.js >= 18
 - Python >= 3.10
-- npm 或 pnpm
+- npm
 - Google Chrome
+- Windows PowerShell（使用一键本地脚本时需要）
 
 ### 1. 安装依赖
 
 ```bash
-# 克隆项目
 git clone https://github.com/weiyf2/deeppoint-ai.git
 cd deeppoint-ai
 
-# 安装 Node.js 依赖
-npm install
+# 方式 A：一键准备本地环境（Node 依赖、Python venv、Playwright Chromium、.env.local）
+npm run setup:local
 
-# 安装 Python 依赖
+# 方式 B：手动安装
+npm ci
 pip install -r requirements.txt
-
-# 如果使用新版抖音数据源，还需安装浏览器
 playwright install chromium
-
-# 或手动安装核心依赖
-pip install DrissionPage beautifulsoup4 lxml scikit-learn numpy python-dotenv
 ```
 
 ### 2. 配置环境变量
 
 ```bash
+# 未使用 npm run setup:local 时再手动复制
 cp .env.example .env.local
 ```
 
 编辑 `.env.local` 文件：
 
 ```env
-# 智谱AI GLM API配置 (必需)
-# 注册地址: https://open.bigmodel.cn/
+# AI 对话模型 provider: glm | openai | ollama | lmstudio
+AI_PROVIDER=glm
+
+# 默认 GLM；如需 OpenAI/Ollama/LM Studio，请改 AI_PROVIDER 并配置对应模型
 GLM_API_KEY=your_glm_api_key_here
 GLM_MODEL_NAME=glm-4.6
 GLM_EMBEDDING_MODEL=embedding-3
@@ -128,6 +127,19 @@ npm run start
 1. 输入目标领域的关键词
 2. AI 将分析用户反馈，生成完整产品方案
 3. 查看产品名称、功能、技术栈、开发计划等
+
+### AI Provider
+
+对话分析支持 `AI_PROVIDER=glm|openai|ollama|lmstudio`。GLM 和 OpenAI 需要 API Key；Ollama 与 LM Studio 默认走本机 OpenAI-compatible 服务。
+
+| Provider | 关键配置 | 默认地址 |
+|----------|----------|----------|
+| GLM | `GLM_API_KEY`, `GLM_MODEL_NAME`, `GLM_EMBEDDING_MODEL` | `https://open.bigmodel.cn/api/paas/v4` |
+| OpenAI | `OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_EMBEDDING_MODEL` | `https://api.openai.com/v1` |
+| Ollama | `OLLAMA_MODEL`, `OLLAMA_EMBEDDING_MODEL` | `http://localhost:11434/v1` |
+| LM Studio | `LM_STUDIO_MODEL`, `LM_STUDIO_EMBEDDING_MODEL` | `http://localhost:1234/v1` |
+
+`EMBEDDING_PROVIDER` 默认跟随 `AI_PROVIDER`，也可以单独指定。语义聚类依赖 embedding 模型，使用 Ollama 时建议先执行 `ollama pull llama3.1` 和 `ollama pull nomic-embed-text`。
 
 ### 语言切换
 
@@ -182,7 +194,8 @@ deeppoint-ai/
 │   │   ├── job-manager.ts        # 任务管理核心
 │   │   ├── douyin-service.ts     # 抖音数据服务
 │   │   ├── xhs-service.ts        # 小红书服务(暂停)
-│   │   ├── glm-service.ts        # GLM大模型服务
+│   │   ├── ai-provider.ts        # AI Provider 适配层
+│   │   ├── glm-service.ts        # 深度分析服务
 │   │   ├── clustering-service.ts # 聚类服务(Python集成)
 │   │   ├── priority-scoring.ts   # 优先级评分系统
 │   │   ├── ai-product-service.ts # AI产品分析
@@ -195,6 +208,7 @@ deeppoint-ai/
 │   ├── xiaohongshu_tool.py       # 小红书爬虫脚本(暂停)
 │   └── semantic_clustering.py    # 语义聚类(embedding + DBSCAN)
 ├── .env.example                  # 环境变量模板
+├── scripts/setup-local.ps1        # Windows 本地环境初始化脚本
 ├── package.json
 ├── requirements.txt              # Python依赖
 └── tsconfig.json
@@ -210,16 +224,27 @@ deeppoint-ai/
 | 数据请求 | SWR (轮询任务状态) |
 | 后端 | Next.js API Routes |
 | 数据采集 | Python + DrissionPage / Playwright |
-| AI 分析 | 智谱 GLM-4.6（思考模型）+ embedding-3 |
+| AI 分析 | GLM / OpenAI / Ollama / LM Studio（OpenAI-compatible chat + embedding） |
 | 聚类算法 | 基于 embedding + DBSCAN 语义聚类 |
 
 ## API 配置
 
-### 智谱 AI (必需)
+### AI Provider
+
+默认使用智谱 GLM：
 
 1. 注册账号：https://open.bigmodel.cn/
 2. 创建 API Key
 3. 配置到 `GLM_API_KEY` 环境变量
+
+切换其他 provider 时，在 `.env.local` 中设置：
+
+```env
+AI_PROVIDER=ollama
+EMBEDDING_PROVIDER=ollama
+OLLAMA_MODEL=llama3.1
+OLLAMA_EMBEDDING_MODEL=nomic-embed-text
+```
 
 ## 常见问题
 
@@ -228,6 +253,9 @@ A: 抖音使用浏览器自动化模拟真实用户，速度较慢是正常的�
 
 ### Q: 如何在服务器部署？
 A: 设置 `HEADLESS=true` 环境变量启用无头浏览器模式。
+
+### Q: 能完全使用本地模型吗？
+A: 可以使用 `AI_PROVIDER=ollama` 或 `AI_PROVIDER=lmstudio`，并确保本地服务提供 chat 和 embedding 两类 OpenAI-compatible 接口。
 
 ### Q: 聚类结果太少？
 A: 可以尝试更多关键词，或调整 `clustering-service.ts` 中的 `minClusterSize` 参数。
@@ -240,6 +268,7 @@ A: 暂不建议使用，测试发现会导致账号被封禁。
 - [x] 抖音数据源支持
 - [x] 痛点聚类分析
 - [x] AI 产品方案生成
+- [x] AI Provider 抽象（GLM / OpenAI / Ollama / LM Studio）
 - [x] 深度抓取（含评论）
 - [x] 多语言支持（中文/英文）
 - [ ] 更多数据源（知乎、微博）

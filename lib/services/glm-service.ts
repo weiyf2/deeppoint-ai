@@ -1,30 +1,5 @@
-// GLM API服务类 - 支持 glm-4.6 思考模型
-import axios from 'axios';
 import { logger } from './logger';
-
-interface GLMMessage {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-}
-
-interface GLMRequest {
-  model: string;
-  messages: GLMMessage[];
-  temperature?: number;
-  max_tokens?: number;
-  stream?: boolean;
-  thinking?: {
-    type: 'enabled' | 'disabled';
-  };
-}
-
-interface GLMResponse {
-  choices: Array<{
-    message: {
-      content: string;
-    };
-  }>;
-}
+import { AIChatProvider, createAIChatProvider } from './ai-provider';
 
 // 深度分析结果接口
 export interface DeepAnalysisResult {
@@ -66,21 +41,18 @@ export interface DeepAnalysisResult {
 
   // 维度4: 优先级相关
   keyword_relevance: number;
-  market_size_score: number;  // GLM评估的市场规模 0-5
+  market_size_score: number;  // AI模型评估的市场规模 0-5
 }
 
 export class GLMService {
-  private apiKey: string;
-  private baseURL: string;
-  private model: string;
+  private provider: AIChatProvider;
   private useThinking: boolean;
 
   constructor() {
-    this.apiKey = process.env.GLM_API_KEY || '';
-    this.baseURL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
-    this.model = process.env.GLM_MODEL_NAME || 'glm-4.6';
-    // glm-4.6 默认启用思考模式
-    this.useThinking = this.model.includes('4.6') || process.env.GLM_USE_THINKING === 'true';
+    this.provider = createAIChatProvider();
+    this.useThinking =
+      this.provider.provider === 'glm' &&
+      (this.provider.model.includes('4.6') || process.env.GLM_USE_THINKING === 'true');
   }
 
   async analyzeCluster(
@@ -89,10 +61,6 @@ export class GLMService {
     dataSize: number,
     locale: string = 'zh'
   ): Promise<DeepAnalysisResult> {
-    if (!this.apiKey) {
-      throw new Error('GLM_API_KEY 环境变量未设置');
-    }
-
     // 数据质量评估
     const qualityLevel = dataSize < 50 ? '小样本探索' :
                         dataSize < 200 ? '初步验证' : '可靠样本';
@@ -188,41 +156,28 @@ ${texts.join('\n\n')}
 【输出语言】
 请使用${locale === 'en' ? '英文' : '中文'}输出所有分析内容（JSON字段名保持英文不变，只翻译字段值）。`;
 
-    const request: GLMRequest = {
-      model: this.model,
-      messages: [
-        {
-          role: 'system',
-          content: '你是一个专业的市场分析师，擅长从用户评论中提取痛点并评估商业价值。请严格按照JSON格式返回结果。'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      stream: false,
-      // glm-4.6 思考模型参数配置
-      ...(this.useThinking ? {
-        thinking: { type: 'enabled' as const },
-        max_tokens: 65536,
-        temperature: 1.0  // 思考模型要求 temperature 为 1.0
-      } : {
-        temperature: 0.6
-      })
-    };
-
     try {
-      const response = await axios.post<GLMResponse>(this.baseURL, request, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`
-        }
-      });
-
-      const content = response.data.choices[0]?.message?.content;
-      if (!content) {
-        throw new Error('GLM API 返回空响应');
-      }
+      const content = await this.provider.complete(
+        [
+          {
+            role: 'system',
+            content: '你是一个专业的市场分析师，擅长从用户评论中提取痛点并评估商业价值。请严格按照JSON格式返回结果。'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        this.useThinking
+          ? {
+              extraBody: { thinking: { type: 'enabled' } },
+              maxTokens: 65536,
+              temperature: 1.0
+            }
+          : {
+              temperature: 0.6
+            }
+      );
 
       // 尝试解析JSON响应
       try {
@@ -290,7 +245,7 @@ ${texts.join('\n\n')}
         return {
           one_line_pain: this.extractFromText(content, '痛点') || content.substring(0, 50) + '...',
           paid_interest: 'Medium' as const,
-          rationale: '基于GLM文本分析结果（JSON解析失败）',
+          rationale: '基于AI文本分析结果（JSON解析失败）',
           potential_product: this.extractFromText(content, '产品') || '需要进一步分析的产品概念',
 
           pain_depth: {
@@ -319,13 +274,13 @@ ${texts.join('\n\n')}
         };
       }
     } catch (apiError) {
-      logger.error('GLM API调用失败:', apiError);
+      logger.error(`${this.provider.provider} API调用失败:`, apiError);
 
       // 返回基于文本内容的默认分析
       return {
         one_line_pain: this.generateDefaultPain(texts),
         paid_interest: 'Medium' as const,
-        rationale: 'GLM API调用失败，基于文本内容推断',
+        rationale: 'AI API调用失败，基于文本内容推断',
         potential_product: '基于用户需求的数字化解决方案',
 
         pain_depth: {

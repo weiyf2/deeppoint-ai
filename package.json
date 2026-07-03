@@ -6,6 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
+    "setup:local": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/setup-local.ps1",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "security:audit": "npm audit --audit-level=moderate",
