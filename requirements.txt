@@ -6,7 +6,7 @@ opencv-python>=4.12.0.88
 python-dotenv>=1.0.0
 
 # 语义聚类依赖
-numpy>=1.24.0
+numpy>=2.5.0
 scikit-learn>=1.3.0
 
 # 小红书数据采集依赖
