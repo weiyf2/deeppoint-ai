@@ -1,6 +1,6 @@
 # Python依赖列表
 Pillow>=9.5.0
-opencv-python>=4.12.0.88
+opencv-python>=5.0.0.93
 
 # 环境变量加载
 python-dotenv>=1.0.0
