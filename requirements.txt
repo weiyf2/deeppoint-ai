@@ -15,7 +15,7 @@ pyexecjs>=1.5.1
 
 # 抖音数据采集依赖 (旧版)
 DrissionPage>=4.0.0
-beautifulsoup4>=4.12.0
+beautifulsoup4>=4.15.0
 lxml>=4.9.0
 
 # 新版抖音爬虫依赖
