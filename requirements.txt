@@ -10,7 +10,7 @@ numpy>=1.24.0
 scikit-learn>=1.3.0
 
 # 小红书数据采集依赖
-curl-cffi>=0.5.0
+curl-cffi>=0.15.0
 pyexecjs>=1.5.1
 
 # 抖音数据采集依赖 (旧版)
